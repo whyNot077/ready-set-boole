@@ -2,21 +2,15 @@ use anyhow::{anyhow, Result};
 
 fn eval(a: bool, b: bool, op: u8) -> bool {
     match op {
-        // negation ¬
-        b'!' => unreachable!("This special case should be handled elsewhere"),
-        // Conjunction ∧
-        b'&' => a && b,
-        // disjunction ∨
-        b'|' => a || b,
-        // exclusive disjunction ⊕
-        b'^' => a ^ b,
-        // material condition ⇒
-        b'>' => !a || b,
-        // logical equivalence ⇔
-        b'=' => a == b,
-        _ => unreachable!("invalid operator"),
+        b'&' => a && b,  // Conjunction ∧
+        b'|' => a || b,  // Disjunction ∨
+        b'^' => a ^ b,   // Exclusive disjunction ⊕
+        b'>' => !a || b, // Material condition ⇒
+        b'=' => a == b,  // Logical equivalence ⇔
+        _ => unreachable!("Invalid operator: {op}"), // 잘못된 연산자 처리
     }
 }
+
 
 pub fn checked_eval_formula(formula: &str) -> Result<bool> {
     let mut val_stack = Vec::new();
