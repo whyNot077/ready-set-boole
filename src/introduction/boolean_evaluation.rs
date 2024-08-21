@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 
-// 연산을 처리하는 함수
 fn eval(a: bool, b: bool, op: u8) -> bool {
     match op {
         b'&' => a && b,  // Conjunction ∧
@@ -8,11 +7,10 @@ fn eval(a: bool, b: bool, op: u8) -> bool {
         b'^' => a ^ b,   // Exclusive disjunction ⊕
         b'>' => !a || b, // Material condition ⇒
         b'=' => a == b,  // Logical equivalence ⇔
-        _ => unreachable!("Invalid operator: {op}"), // 잘못된 연산자 처리
+        _ => unreachable!("Invalid operator: {op}"),
     }
 }
 
-// 논리식을 평가하는 함수 (후위 표기식)
 pub fn checked_eval_formula(formula: &str) -> Result<bool> {
     let mut stack = Vec::new();  // 값을 저장할 스택
 

@@ -9,5 +9,6 @@
 //     pub mod negation_normal_form;
 // }
 
+pub mod ex00;
 pub mod introduction;
 pub mod rewrite_rules;
