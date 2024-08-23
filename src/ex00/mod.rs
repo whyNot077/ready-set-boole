@@ -1,1 +1,1 @@
-pub mod multiplier;
+pub mod adder;

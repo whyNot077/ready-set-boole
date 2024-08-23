@@ -1,14 +1,12 @@
-
-// pub mod introduction {
-//     pub mod adder;
-//     pub mod multiplier;
-//     pub mod gray_code;
-//     pub mod eval_formula;
-//     pub mod boolean_evaluation;
-//     pub mod truth_table;
-//     pub mod negation_normal_form;
-// }
-
 pub mod ex00;
-pub mod introduction;
-pub mod rewrite_rules;
+pub mod ex01;
+pub mod ex02;
+pub mod ex03;
+pub mod ex04;
+pub mod ex05;
+pub mod ex06;
+pub mod ex07;
+pub mod ex08;
+pub mod ex09;
+pub mod ex10;
+pub mod ex11;
