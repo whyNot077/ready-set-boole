@@ -21,7 +21,6 @@ mod tests {
 
     #[test]
     fn test_gray_code_next_value_different_by_one_bit() {
-        // 연속된 두 값의 gray_code 결과가 1비트만 차이나는지 확인
         for n in 0..1_000 {
             let gray_n = gray_code(n);
             let gray_n_plus_one = gray_code(n + 1);
