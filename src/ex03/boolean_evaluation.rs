@@ -12,16 +12,16 @@ fn eval(a: bool, b: bool, op: u8) -> bool {
 }
 
 pub fn checked_eval_formula(formula: &str) -> Result<bool> {
-    let mut stack = Vec::new();  // 값을 저장할 스택
+    let mut stack = Vec::new();
 
     for &token in formula.as_bytes() {
         match token {
-            b'0' | b'1' => stack.push((token - b'0') != 0),  // 0 또는 1을 스택에 추가
-            b'!' => {  // 단항 연산자 처리
+            b'0' | b'1' => stack.push((token - b'0') != 0),
+            b'!' => {
                 let value = stack.pop().ok_or_else(|| anyhow!("Missing operand for '!' operator"))?;
                 stack.push(!value);
             }
-            b'&' | b'|' | b'^' | b'>' | b'=' => {  // 이항 연산자 처리
+            b'&' | b'|' | b'^' | b'>' | b'=' => {
                 let b = stack.pop().ok_or_else(|| anyhow!("Missing second operand for operator {token}"))?;
                 let a = stack.pop().ok_or_else(|| anyhow!("Missing first operand for operator {token}"))?;
                 stack.push(eval(a, b, token));
@@ -31,14 +31,13 @@ pub fn checked_eval_formula(formula: &str) -> Result<bool> {
     }
 
     if stack.len() == 1 {
-        Ok(stack.pop().unwrap())  // 스택에 남은 마지막 값을 반환
+        Ok(stack.pop().unwrap())
     } else {
-        Err(anyhow!("Formula evaluation resulted in multiple values on stack"))  // 스택에 값이 여러 개 남은 경우 오류 반환
+        Err(anyhow!("Formula evaluation resulted in multiple values on stack"))
     }
 }
 
-// 포뮬러를 평가하는 함수 (unwrap 사용)
-pub fn eval_formula(formula: &str) -> bool {
+pub fn eval_formula(formula: &str) -> bool {        
     checked_eval_formula(formula).unwrap()
 }
 
