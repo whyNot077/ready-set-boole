@@ -1,4 +1,4 @@
 #!/bin/bash
 git add .
-git commit -m "boolean_evaluation"
+git commit -m "truth_table"
 git push

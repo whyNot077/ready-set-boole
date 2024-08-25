@@ -11,34 +11,42 @@ fn eval(a: bool, b: bool, op: u8) -> bool {
     }
 }
 
-pub fn checked_eval_formula(formula: &str) -> Result<bool> {
+pub fn check_eval_formula(formula: &str) -> Result<bool> {
     let mut stack = Vec::new();
 
     for &token in formula.as_bytes() {
         match token {
             b'0' | b'1' => stack.push((token - b'0') != 0),
             b'!' => {
-                let value = stack.pop().ok_or_else(|| anyhow!("Missing operand for '!' operator"))?;
+                let value = stack
+                    .pop()
+                    .ok_or_else(|| anyhow!("Missing operand for '!' operator"))?;
                 stack.push(!value);
             }
             b'&' | b'|' | b'^' | b'>' | b'=' => {
-                let b = stack.pop().ok_or_else(|| anyhow!("Missing second operand for operator {token}"))?;
-                let a = stack.pop().ok_or_else(|| anyhow!("Missing first operand for operator {token}"))?;
+                let b = stack
+                    .pop()
+                    .ok_or_else(|| anyhow!("Missing second operand for operator {token}"))?;
+                let a = stack
+                    .pop()
+                    .ok_or_else(|| anyhow!("Missing first operand for operator {token}"))?;
                 stack.push(eval(a, b, token));
             }
-            _ => return Err(anyhow!("Invalid character in formula: {}", token as char)),  // 잘못된 문자 처리
+            _ => return Err(anyhow!("Invalid character in formula: {}", token as char)), // 잘못된 문자 처리
         }
     }
 
     if stack.len() == 1 {
         Ok(stack.pop().unwrap())
     } else {
-        Err(anyhow!("Formula evaluation resulted in multiple values on stack"))
+        Err(anyhow!(
+            "Formula evaluation resulted in multiple values on stack"
+        ))
     }
 }
 
-pub fn eval_formula(formula: &str) -> bool {        
-    checked_eval_formula(formula).unwrap()
+pub fn eval_formula(formula: &str) -> bool {
+    check_eval_formula(formula).unwrap()
 }
 
 #[cfg(test)]
@@ -64,6 +72,6 @@ mod tests {
         assert!(!eval_formula("11^"));
         assert!(eval_formula("10^"));
 
-        assert!(checked_eval_formula("1&").is_err());
+        assert!(check_eval_formula("1&").is_err());
     }
 }
