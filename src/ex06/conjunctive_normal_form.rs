@@ -1,3 +1,65 @@
+// use std::collections::HashSet;
+// use anyhow::Result;
+// use crate::ex03::boolean_evaluation::check_eval_formula;
+
+// pub fn generate_cnf(formula: &str) -> Result<String, Box<dyn std::error::Error>> {
+//     // 진리표 생성
+//     let variables: HashSet<char> = formula.chars()
+//         .filter(|c| c.is_ascii_uppercase())
+//         .collect();
+//     let mut var_vec: Vec<char> = variables.into_iter().collect();
+//     var_vec.sort();
+    
+//     let mut clauses = Vec::new();
+//     let var_count = var_vec.len();
+//     let row_count = 1 << var_count;  // 2^var_count
+
+//     for i in 0..row_count {
+//         let mut expr = formula.to_string();
+//         let mut clause = Vec::new();
+
+//         for (j, &var) in var_vec.iter().enumerate() {
+//             let value = (i & (1 << (var_count - j - 1))) != 0;
+//             unsafe {
+//                 for c in expr.as_bytes_mut().iter_mut() {
+//                     if *c == var as u8 {
+//                         *c = if value { b'1' } else { b'0' };
+//                     }
+//                 }
+//             }
+//             if !value {
+//                 clause.push(format!("{}", var));
+//             } else {
+//                 clause.push(format!("{}!", var));
+//             }
+//         }
+
+//         // 결과가 false인 경우에만 절을 추가
+//         let result = check_eval_formula(&expr)?;
+//         if !result {
+//             clauses.push(clause.join("|"));
+//         }
+//     }
+
+//     // 모든 절을 AND로 결합하여 CNF 생성
+//     Ok(clauses.join("&"))
+// }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test_generate_cnf() {
+//         // 기본적인 테스트
+//         assert_eq!(generate_cnf("AB&C|").unwrap(), "A|B|C!");
+        
+//         // 추가 테스트 케이스
+//         // assert_eq!(generate_cnf("A!B!|").unwrap(), "A!|B!");
+//     }
+// }
+
+
 #[derive(Clone)]
 struct AstNode {
     item: char,
