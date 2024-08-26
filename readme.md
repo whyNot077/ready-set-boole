@@ -1,5 +1,12 @@
 # Ready Set Boole!
 
+# Windows에서:
+git config --global core.autocrlf true
+
+# Unix/Linux/macOS에서:
+git config --global core.autocrlf input
+
+
 ### ex00 adder 
 ```rs
 pub fn adder(mut a: u32, mut b: u32) -> Result<u32, String> {

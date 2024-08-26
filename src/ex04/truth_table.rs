@@ -1,106 +1,67 @@
-use crate::ex03::boolean_evaluation::{eval_tree, Node};
+use crate::ex03::boolean_evaluation::{eval_tree, build_tree};
 use anyhow::Result;
-use anyhow::anyhow;
 use std::collections::HashSet;
-use std::rc::Rc;
-use std::cell::RefCell;
+use std::collections::HashMap;
+use std::error::Error;
 
-pub fn generate_truth_table(formula: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let variables: HashSet<char> = formula.chars()
-        .filter(|c| c.is_ascii_uppercase())
-        .collect();
+// 변수 추출 함수
+fn extract_variables(formula: &str) -> Vec<char> {
+    let mut variables = HashSet::new();
+    for c in formula.chars() {
+        if c.is_ascii_uppercase() {
+            variables.insert(c);
+        }
+    }
     let mut var_vec: Vec<char> = variables.into_iter().collect();
-    var_vec.sort();
-    
-    let mut output = String::new();
-
-    print_header(&mut output, &var_vec);
-    truth_table(&mut output, formula, &var_vec)?;
-
-    Ok(output)
+    var_vec.sort(); // 순서를 유지하기 위해 정렬
+    var_vec
 }
 
-fn print_header(output: &mut String, var_vec: &[char]) {
-    for &var in var_vec {
+// 진리표 생성 함수
+pub fn generate_truth_table(formula: &str) -> Result<String, Box<dyn Error>> {
+    let variables = extract_variables(formula);
+    let num_vars = variables.len();
+    let num_rows = 1 << num_vars; // 2^num_vars
+
+    let mut output = String::new();
+
+    // 헤더 출력
+    for var in &variables {
         output.push_str(&format!("| {} ", var));
     }
     output.push_str("| = |\n");
-    for _ in var_vec {
-        output.push_str("|---");
-    }
-    output.push_str("|---|\n");
-}
+    output.push_str(&"|---".repeat(num_vars + 1));
+    output.push_str("|\n");
 
-fn truth_table(output: &mut String, formula: &str, var_vec: &[char]) -> Result<(), Box<dyn std::error::Error>> {
-    let var_count = var_vec.len();
-    let row_count = 1 << var_count;  // 2^var_count
+    // 모든 경우의 수에 대해 평가
+    for i in 0..num_rows {
+        let mut env = HashMap::new();
 
-    for i in 0..row_count {
-        let mut env = Vec::new();
-
-        for (j, &var) in var_vec.iter().enumerate() {
-            let value = (i & (1 << (var_count - j - 1))) != 0;
+        // 각 변수에 대해 값을 할당
+        for (j, var) in variables.iter().enumerate() {
+            let value = (i >> (num_vars - j - 1)) & 1 == 1;
+            env.insert(*var, value);
             output.push_str(&format!("| {} ", if value { 1 } else { 0 }));
-            env.push((var, value));
         }
 
-        // 트리를 생성하고 환경에 따라 노드를 평가
-        let tree = build_tree_with_env(&formula, &env)?;
-        let result = eval_tree(&tree);
+        // 식을 평가
+        let tree = build_tree(formula).map_err(|e| e.to_string())?; // 오류 처리 추가
+        let result = eval_tree(&tree, &env);
 
         output.push_str(&format!("| {} |\n", if result { 1 } else { 0 }));
     }
 
-    Ok(())
+    Ok(output)
 }
 
-// 트리를 생성할 때 환경에 따라 변수 값을 바꿔주는 함수
-fn build_tree_with_env(formula: &str, env: &[(char, bool)]) -> Result<Rc<RefCell<Node>>> {
-    let mut stack: Vec<Rc<RefCell<Node>>> = Vec::new();
-
-    for &token in formula.as_bytes() {
-        if token.is_ascii_uppercase() {
-            // 환경에서 변수 값 찾기
-            let value = env.iter().find(|&&(var, _)| var as u8 == token)
-                           .map(|&(_, value)| value)
-                           .ok_or_else(|| anyhow!("Variable not found in environment"))?;
-            let operand = Node::Operand(value);
-            stack.push(Rc::new(RefCell::new(operand)));
-        } else {
-            match token {
-                b'0' | b'1' => {
-                    // 피연산자를 노드로 변환하여 스택에 푸시
-                    let operand = Node::Operand((token - b'0') != 0);
-                    stack.push(Rc::new(RefCell::new(operand)));
-                }
-                b'!' => {
-                    // 단항 연산자 (!)
-                    let operand = stack.pop().ok_or_else(|| anyhow!("Missing operand for '!' operator"))?;
-                    let negated = Node::Operand(!eval_tree(&operand));
-                    stack.push(Rc::new(RefCell::new(negated)));
-                }
-                b'&' | b'|' | b'^' | b'>' | b'=' => {
-                    // 이항 연산자 (&, |, ^, >, =)
-                    let right = stack.pop().ok_or_else(|| anyhow!("Missing second operand for operator {token}"))?;
-                    let left = stack.pop().ok_or_else(|| anyhow!("Missing first operand for operator {token}"))?;
-                    let operator = Node::Operator(token, Rc::clone(&left), Rc::clone(&right));
-                    stack.push(Rc::new(RefCell::new(operator)));
-                }
-                _ => return Err(anyhow!("Invalid character in formula: {}", token as char)), // 잘못된 문자 처리
-            }
-        }
-    }
-
-    if stack.len() == 1 {
-        Ok(stack.pop().unwrap())
-    } else {
-        Err(anyhow!("Formula evaluation resulted in multiple values on stack"))
-    }
-}
-
+// 진리표를 출력하는 함수
 pub fn print_truth_table(formula: &str) {
-    print!("{}", generate_truth_table(formula).unwrap());
+    match generate_truth_table(formula) {
+        Ok(output) => print!("{}", output),
+        Err(e) => eprintln!("Error generating truth table: {}", e),
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -108,7 +69,7 @@ mod tests {
 
     #[test]
     fn test_truth_table() {
-        let res = generate_truth_table("AB&C|").unwrap();
+        let res: String = generate_truth_table("AB&C|").unwrap();
         assert_eq!(res, "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 0 |\n| 0 | 1 | 1 | 1 |\n| 1 | 0 | 0 | 0 |\n| 1 | 0 | 1 | 1 |\n| 1 | 1 | 0 | 1 |\n| 1 | 1 | 1 | 1 |\n");
         
         assert!(generate_truth_table("AB&C|&").is_err());
