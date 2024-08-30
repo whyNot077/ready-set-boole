@@ -133,7 +133,7 @@ pub fn get_ast(expression: &str) -> Result<ASTNode> {
 // 입력 문자열과 원래 표현식을 비교하는 함수
 pub fn check_ast_string(expression: &str) {
     let tokens = tokenize(expression);
-    let postfix_tokens = infix_to_postfix(&tokens);
+    let postfix_tokens: Vec<Token> = infix_to_postfix(&tokens);
     let ast = postfix_to_ast(&postfix_tokens).unwrap();
     let ast_string = ast_to_string(&ast);
 
