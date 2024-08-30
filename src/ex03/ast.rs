@@ -67,7 +67,6 @@ fn postfix_to_ast(tokens: &[Token]) -> Option<ASTNode> {
     for token in tokens {
         match token {
             Token::Operand(value) => stack.push(ASTNode::Operand(*value)),
-
             Token::Operator(op) => {
                 if *op == '!' {
                     // 논리 NOT 연산자는 단항 연산자이므로 하나의 피연산자만 필요
@@ -79,8 +78,6 @@ fn postfix_to_ast(tokens: &[Token]) -> Option<ASTNode> {
                     stack.push(ASTNode::Operator(*op, Box::new(left), Box::new(right)));
                 }
             }
-
-            _ => panic!("Unexpected token"),
         }
     }
 
@@ -110,20 +107,31 @@ impl fmt::Display for ASTNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ASTNode::Operand(c) => write!(f, "{}", c),
-            ASTNode::Operator(op, left, right) => {    
+            ASTNode::Operator(op, left, right) => {
+                let left_needs_parens = matches!(**left, ASTNode::Operator(l_op, _, _) if precedence(l_op) < precedence(*op));
+                let right_needs_parens = matches!(**right, ASTNode::Operator(r_op, _, _) if precedence(r_op) <= precedence(*op));
+                
                 if *op == '!' {
-                    write!(f, "{}{}", op, left)?;
+                    write!(f, "{}{}", op, left)
                 } else {
+                    if left_needs_parens {
+                        write!(f, "({})", left)?;
+                    } else {
                         write!(f, "{}", left)?;
                     }
 
                     write!(f, "{}", op)?;
-                    write!(f, "{}", right)
+
+                    if right_needs_parens {
+                        write!(f, "({})", right)
+                    } else {
+                        write!(f, "{}", right)
+                    }
                 }
             }
         }
     }
-
+}
 
 // AST를 문자열로 변환하는 함수
 fn ast_to_string(ast: &ASTNode) -> String {
