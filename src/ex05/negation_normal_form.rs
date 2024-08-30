@@ -1,107 +1,121 @@
-use anyhow::Result;
-use std::rc::Rc;
-use std::cell::RefCell;
-use crate::ex03::boolean_evaluation::{Node, build_tree};
+// use crate::ex03::ast::Node; // Import the Node struct from ast.rs
+// use anyhow::{Result, anyhow};
+// use std::rc::Rc;
+// use std::cell::RefCell;
 
-pub fn negation_normal_form(formula: &str) -> Result<String> {
-    let tree = build_tree(formula)?;
-    let nnf_tree = to_nnf(&tree);
-    Ok(tree_to_string(&nnf_tree))
-}
+// fn parse(mut s: &[u8]) -> Result<(Rc<RefCell<Node>>, &[u8])> {
+//     let mut val = *s.last().unwrap();
+//     s = &s[..s.len() - 1];
+//     let mut neg = false;
 
-fn to_nnf(node: &Rc<RefCell<Node>>) -> Rc<RefCell<Node>> {
-    match &*node.borrow() {
-        Node::Operand(_) | Node::Variable(_) => Rc::clone(node),
-        Node::Operator('!', child, _) => {
-            match &*child.borrow() {
-                Node::Operand(_) | Node::Variable(_) => Rc::clone(node),
-                Node::Operator('&', left, Some(right)) => {
-                    // Apply De Morgan's law: !(A & B) -> !A | !B
-                    let left_nnf = to_nnf(&Rc::new(RefCell::new(Node::Operator('!', Rc::clone(left), None))));
-                    let right_nnf = to_nnf(&Rc::new(RefCell::new(Node::Operator('!', Rc::clone(right), None))));
-                    Rc::new(RefCell::new(Node::Operator('|', left_nnf, Some(right_nnf))))
-                }
-                Node::Operator('|', left, Some(right)) => {
-                    // Apply De Morgan's law: !(A | B) -> !A & !B
-                    let left_nnf = to_nnf(&Rc::new(RefCell::new(Node::Operator('!', Rc::clone(left), None))));
-                    let right_nnf = to_nnf(&Rc::new(RefCell::new(Node::Operator('!', Rc::clone(right), None))));
-                    Rc::new(RefCell::new(Node::Operator('&', left_nnf, Some(right_nnf))))
-                }
-                Node::Operator('!', inner_child, _) => {
-                    // Double negation: !!A -> A
-                    to_nnf(inner_child)
-                }
-                Node::Operator('>', left, Some(right)) => {
-                    // Implication: !(A > B) -> A & !B
-                    let left_nnf = to_nnf(left);
-                    let right_nnf = to_nnf(&Rc::new(RefCell::new(Node::Operator('!', Rc::clone(right), None))));
-                    Rc::new(RefCell::new(Node::Operator('&', left_nnf, Some(right_nnf))))
-                }
-                Node::Operator('=', left, Some(right)) => {
-                    // Equivalence: !(A = B) -> !(A & B) | !(¬A & ¬B)
-                    let a_and_b = Rc::new(RefCell::new(Node::Operator('&', Rc::clone(left), Some(Rc::clone(right)))));
-                    let not_a = Rc::new(RefCell::new(Node::Operator('!', Rc::clone(left), None)));
-                    let not_b = Rc::new(RefCell::new(Node::Operator('!', Rc::clone(right), None)));
-                    // Wrap first argument as Rc<RefCell<Node>> directly, without wrapping in Some
-                    let not_a_and_not_b = Rc::new(RefCell::new(Node::Operator('&', not_a, Some(not_b))));
-                    Rc::new(RefCell::new(Node::Operator('|', to_nnf(&a_and_b), Some(to_nnf(&not_a_and_not_b)))))
-                }
-                _ => Rc::clone(node),  // Handle other cases
-            }
-        }
-        Node::Operator('>', left, Some(right)) => {
-            // Convert implication: A > B -> !A | B
-            let left_nnf = to_nnf(&Rc::new(RefCell::new(Node::Operator('!', Rc::clone(left), None))));
-            let right_nnf = to_nnf(right);
-            Rc::new(RefCell::new(Node::Operator('|', left_nnf, Some(right_nnf))))
-        }
-        Node::Operator('=', left, Some(right)) => {
-            // Convert equivalence: A = B -> (A & B) | (!A & !B)
-            let left_and_right = Rc::new(RefCell::new(Node::Operator('&', Rc::clone(left), Some(Rc::clone(right)))));
-            let not_left = Rc::new(RefCell::new(Node::Operator('!', Rc::clone(left), None)));
-            let not_right = Rc::new(RefCell::new(Node::Operator('!', Rc::clone(right), None)));
-            // Wrap first argument as Rc<RefCell<Node>> directly, without wrapping in Some
-            let not_left_and_not_right = Rc::new(RefCell::new(Node::Operator('&', not_left, Some(not_right))));
-            Rc::new(RefCell::new(Node::Operator('|', to_nnf(&left_and_right), Some(to_nnf(&not_left_and_not_right)))))
-        }
-        Node::Operator(op, left, Some(right)) => {
-            // Apply NNF to children
-            let left_nnf = to_nnf(left);
-            let right_nnf = to_nnf(right);
-            Rc::new(RefCell::new(Node::Operator(*op, left_nnf, Some(right_nnf))))
-        }
-        _ => Rc::clone(node),  // Handle other cases
-    }
-}
+//     while val == b'!' {
+//         val = *s
+//             .last()
+//             .ok_or_else(|| anyhow!("invalid input (invalid negation)"))?;
+//         s = &s[..s.len() - 1];
+//         neg = !neg;
+//     }
 
-// Helper function to convert a tree to a string in reverse polish notation
-fn tree_to_string(node: &Rc<RefCell<Node>>) -> String {
-    match &*node.borrow() {
-        Node::Operand(value) => if *value { "1".to_string() } else { "0".to_string() },
-        Node::Variable(var) => var.to_string(),
-        Node::Operator(op, left, Some(right)) => {
-            let left_str = tree_to_string(left);
-            let right_str = tree_to_string(right);
-            format!("{}{}{}", left_str, right_str, op)
-        }
-        Node::Operator(op, left, None) => {
-            let left_str = tree_to_string(left);
-            format!("{}{}", left_str, op)
-        }
-    }
-}
+//     match val {
+//         b'&' | b'^' | b'|' | b'>' | b'=' => {
+//             let (right, s) = parse(s)?;
+//             let (left, s) = parse(s)?;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+//             let node = Node::new_operator(val, left, Some(right));
+//             if neg {
+//                 let neg_node = Node::new_operator(b'!', Rc::new(RefCell::new(node)), None);
+//                 return Ok((Rc::new(RefCell::new(neg_node)), s));
+//             }
+//             Ok((Rc::new(RefCell::new(node)), s))
+//         }
+//         b'A'..=b'Z' => {
+//             let node = Node::new_variable(val);
+//             if neg {
+//                 let neg_node = Node::new_operator(b'!', Rc::new(RefCell::new(node)), None);
+//                 return Ok((Rc::new(RefCell::new(neg_node)), s));
+//             }
+//             Ok((Rc::new(RefCell::new(node)), s))
+//         }
+//         _ => Err(anyhow!("invalid input (invalid char `{}`)", val as char)),
+//     }
+// }
 
-    #[test]
-    fn test_negation_normal_form() {
-        assert_eq!(negation_normal_form("AB&!").unwrap(), "A!B!|");
-        assert_eq!(negation_normal_form("AB|!").unwrap(), "A!B!&");
-        assert_eq!(negation_normal_form("AB>").unwrap(), "A!B|");
-        assert_eq!(negation_normal_form("AB=").unwrap(), "AB&A!B!&|");
-        assert_eq!(negation_normal_form("AB|C&!").unwrap(), "A!B!&C!|");
-        assert_eq!(negation_normal_form("A!B!|C!&").unwrap(), "A!B!|C!&");
-    }
-}
+// pub fn build_tree(s: &str) -> Result<Rc<RefCell<Node>>> {
+//     let res = parse(s.as_bytes())?;
+//     assert!(res.1.is_empty());
+//     Ok(res.0)
+// }
+
+// fn to_nnf_string(node: &Rc<RefCell<Node>>) -> Result<String> {
+//     let node_ref = node.borrow();
+//     if let Some(b'!') = node_ref.operator {
+//         let child = node_ref.children.as_ref().unwrap()[0].clone();
+//         let child_op = child.borrow().operator; // Borrow operator
+//         match child_op {
+//             Some(b'&') => {
+//                 let left_nnf = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//                     b'!', Rc::clone(&child.borrow().children.as_ref().unwrap()[0]), None,
+//                 ))))?;
+//                 let right_nnf = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//                     b'!', Rc::clone(&child.borrow().children.as_ref().unwrap()[1]), None,
+//                 ))))?;
+//                 Ok(format!("{}{}|", left_nnf, right_nnf))
+//             }
+//             Some(b'|') => {
+//                 let left_nnf = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//                     b'!', Rc::clone(&child.borrow().children.as_ref().unwrap()[0]), None,
+//                 ))))?;
+//                 let right_nnf = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//                     b'!', Rc::clone(&child.borrow().children.as_ref().unwrap()[1]), None,
+//                 ))))?;
+//                 Ok(format!("{}{}&", left_nnf, right_nnf))
+//             }
+//             Some(b'!') => to_nnf_string(&child.borrow().children.as_ref().unwrap()[0]),
+//             _ => Ok(format!("{}!", to_nnf_string(&child)?)),
+//         }
+//     } else if let Some(b'>') = node_ref.operator {
+//         let left_nnf = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//             b'!', Rc::clone(&node_ref.children.as_ref().unwrap()[0]), None,
+//         ))))?;
+//         let right_nnf = to_nnf_string(&node_ref.children.as_ref().unwrap()[1])?;
+//         Ok(format!("{}{}|", left_nnf, right_nnf))
+//     } else if let Some(b'=') = node_ref.operator {
+//         let left_and_right = format!("{}{}&", to_nnf_string(&node_ref.children.as_ref().unwrap()[0])?, to_nnf_string(&node_ref.children.as_ref().unwrap()[1])?);
+//         let not_left = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//             b'!', Rc::clone(&node_ref.children.as_ref().unwrap()[0]), None,
+//         ))))?;
+//         let not_right = to_nnf_string(&Rc::new(RefCell::new(Node::new_operator(
+//             b'!', Rc::clone(&node_ref.children.as_ref().unwrap()[1]), None,
+//         ))))?;
+//         let not_left_and_right = format!("{}{}&", not_left, not_right);
+//         Ok(format!("{}{}|", left_and_right, not_left_and_right))
+//     } else {
+//         if let Some(children) = &node_ref.children {
+//             let left_nnf = to_nnf_string(&children[0])?;
+//             let right_nnf = to_nnf_string(&children[1])?;
+//             Ok(format!("{}{}{}", left_nnf, right_nnf, node_ref.operator.unwrap() as char))
+//         } else {
+//             Ok((node_ref.variable.unwrap() as char).to_string())
+//         }
+//     }
+// }
+
+// pub fn negation_normal_form(formula: &str) -> Result<String> {
+//     let tree = build_tree(formula)?;
+//     to_nnf_string(&tree)
+// }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test_negation_normal_form() {
+//         assert_eq!(negation_normal_form("AB&!").unwrap(), "A!B!|");
+//         assert_eq!(negation_normal_form("AB|!").unwrap(), "A!B!&");
+//         assert_eq!(negation_normal_form("AB>").unwrap(), "A!B|");
+//         assert_eq!(negation_normal_form("AB=").unwrap(), "AB&A!B!&|");
+//         assert_eq!(negation_normal_form("AB|C&!").unwrap(), "A!B!&C!|");
+//         assert_eq!(negation_normal_form("A!B!|C!&").unwrap(), "A!B!|C!&");
+//     }
+// }

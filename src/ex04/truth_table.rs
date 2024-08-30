@@ -1,80 +1,80 @@
-use crate::ex03::boolean_evaluation::{eval_tree, build_tree};
-use anyhow::Result;
-use std::collections::HashSet;
-use std::collections::HashMap;
-use std::error::Error;
+// use std::fmt::Write;
+// use anyhow::Result;
+// use crate::ex03::boolean_evaluation::checked_eval_formula;
 
-// 변수 추출 함수
-fn extract_variables(formula: &str) -> Vec<char> {
-    let mut variables = HashSet::new();
-    for c in formula.chars() {
-        if c.is_ascii_uppercase() {
-            variables.insert(c);
-        }
-    }
-    let mut var_vec: Vec<char> = variables.into_iter().collect();
-    var_vec.sort(); // 순서를 유지하기 위해 정렬
-    var_vec
-}
+// // Function to generate a truth table for a given formula
+// pub fn generate_truth_table(formula: &str) -> Result<String> {
+//     let mut output = String::new();
 
-// 진리표 생성 함수
-pub fn generate_truth_table(formula: &str) -> Result<String, Box<dyn Error>> {
-    let variables = extract_variables(formula);
-    let num_vars = variables.len();
-    let num_rows = 1 << num_vars; // 2^num_vars
+//     // Extract and sort variables (A-Z)
+//     let mut vars = formula
+//         .bytes()
+//         .filter(|token| token.is_ascii_uppercase())
+//         .collect::<Vec<_>>();
+//     vars.sort_unstable();
+//     vars.dedup();
 
-    let mut output = String::new();
+//     // Generate the table header
+//     for &v in &vars {
+//         write!(output, "| {} ", v as char)?;
+//     }
+//     writeln!(output, "| = |")?;
+//     for _ in &vars {
+//         write!(output, "|---")?;
+//     }
+//     writeln!(output, "|---|")?;
 
-    // 헤더 출력
-    for var in &variables {
-        output.push_str(&format!("| {} ", var));
-    }
-    output.push_str("| = |\n");
-    output.push_str(&"|---".repeat(num_vars + 1));
-    output.push_str("|\n");
+//     // Generate rows for each possible combination of truth values
+//     for i in 0..(2_u32.pow(vars.len() as u32)) {
+//         // Create a bitmask for variable values
+//         let var_values = format!("{:0width$b}", i, width = vars.len()).into_bytes();
+//         assert!(var_values.len() == vars.len());
 
-    // 모든 경우의 수에 대해 평가
-    for i in 0..num_rows {
-        let mut env = HashMap::new();
+//         // Make a copy of the formula and replace variables with their truth values
+//         let mut formula_copy = formula.to_string();
+//         unsafe {
+//             for c in formula_copy.as_bytes_mut().iter_mut() {
+//                 for (var, &val) in vars.iter().zip(var_values.iter()) {
+//                     if *c == *var {
+//                         *c = val;
+//                     }
+//                 }
+//             }
+//         }
 
-        // 각 변수에 대해 값을 할당
-        for (j, var) in variables.iter().enumerate() {
-            let value = (i >> (num_vars - j - 1)) & 1 == 1;
-            env.insert(*var, value);
-            output.push_str(&format!("| {} ", if value { 1 } else { 0 }));
-        }
+//         // Evaluate the modified formula
+//         let result = checked_eval_formula(&formula_copy)?;
 
-        // 식을 평가
-        let tree = build_tree(formula).map_err(|e| e.to_string())?; // 오류 처리 추가
-        let result = eval_tree(&tree, &env);
+//         // Write the row for the current combination
+//         for &c in &var_values {
+//             write!(output, "| {} ", c as char)?;
+//         }
+//         writeln!(output, "| {} |", result as u32)?;
+//     }
 
-        output.push_str(&format!("| {} |\n", if result { 1 } else { 0 }));
-    }
+//     Ok(output)
+// }
 
-    Ok(output)
-}
+// // Function to print the truth table
+// pub fn print_truth_table(formula: &str) {
+//     match generate_truth_table(formula) {
+//         Ok(output) => print!("{}", output),
+//         Err(e) => eprintln!("Error generating truth table: {}", e),
+//     }
+// }
 
-// 진리표를 출력하는 함수
-pub fn print_truth_table(formula: &str) {
-    match generate_truth_table(formula) {
-        Ok(output) => print!("{}", output),
-        Err(e) => eprintln!("Error generating truth table: {}", e),
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
+//     #[test]
+//     fn test_truth_table() {
+//         let res = generate_truth_table("AB&C|").unwrap();
+//         assert_eq!(res, "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 0 |\n| 0 | 1 | 1 | 1 |\n| 1 | 0 | 0 | 0 |\n| 1 | 0 | 1 | 1 |\n| 1 | 1 | 0 | 1 |\n| 1 | 1 | 1 | 1 |\n");
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+//         assert!(generate_truth_table("AB&C|&").is_err());
 
-    #[test]
-    fn test_truth_table() {
-        let res: String = generate_truth_table("AB&C|").unwrap();
-        assert_eq!(res, "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 0 |\n| 0 | 1 | 1 | 1 |\n| 1 | 0 | 0 | 0 |\n| 1 | 0 | 1 | 1 |\n| 1 | 1 | 0 | 1 |\n| 1 | 1 | 1 | 1 |\n");
-        
-        assert!(generate_truth_table("AB&C|&").is_err());
-        
-        let res = generate_truth_table("A!").unwrap();
-        assert_eq!(res, "| A | = |\n|---|---|\n| 0 | 1 |\n| 1 | 0 |\n");
-    }
-}
+//         let res = generate_truth_table("A!").unwrap();
+//         assert_eq!(res, "| A | = |\n|---|---|\n| 0 | 1 |\n| 1 | 0 |\n");
+//     }
+// }
