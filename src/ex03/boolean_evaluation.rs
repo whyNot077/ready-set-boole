@@ -1,71 +1,52 @@
-// use anyhow::{anyhow, Result};
+use anyhow::{Result, Context};
+use super::ast::{get_ast, ASTNode};
 
-// // Simplified evaluation function based on the stack-based approach
-// fn eval(a: bool, b: bool, op: u8) -> bool {
-//     match op {
-//         b'&' => a && b,
-//         b'|' => a || b,
-//         b'^' => a ^ b,
-//         b'>' => !a || b,
-//         b'=' => a == b,
-//         _ => unreachable!("invalid operator"),
-//     }
-// }
+/// 수식을 평가하는 함수
+pub fn check_eval_formula(formula: &str) -> Result<bool> {
+    let ast = get_ast(formula).context("Failed to create AST from formula")?;
+    Ok(evaluate_ast(&ast))
+}
 
-// // Evaluate formula using stack-based approach
-// pub fn checked_eval_formula(formula: &str) -> Result<bool> {
-//     let mut val_stack = Vec::new();
+pub fn eval_formula(formula: &str) -> bool {
+    check_eval_formula(formula).unwrap()
+}
 
-//     for &val in formula.as_bytes() {
-//         match val {
-//             b'0' | b'1' => val_stack.push((val - b'0') != 0),
-//             b'!' => {
-//                 let a = val_stack.pop().ok_or_else(|| anyhow!("Missing value for `!`"))?;
-//                 val_stack.push(!a);
-//             }
-//             b'&' | b'|' | b'^' | b'>' | b'=' => {
-//                 let b = val_stack.pop().ok_or_else(|| anyhow!("Missing 2 values for operator"))?;
-//                 let a = val_stack.pop().ok_or_else(|| anyhow!("Missing 1 value for operator"))?;
-//                 val_stack.push(eval(a, b, val));
-//             }
-//             _ => return Err(anyhow!("Invalid character: {}", val)),
-//         }
-//     }
-//     if val_stack.len() == 1 {
-//         Ok(val_stack.pop().unwrap())
-//     } else {
-//         Err(anyhow!("Formula returns multiple values"))
-//     }
-// }
+/// AST를 평가하여 논리값을 반환하는 재귀 함수
+fn evaluate_ast(node: &ASTNode) -> bool {
+    match node {
+        ASTNode::Operand(c) => match c {
+            '0' => false,  // '0'은 false를 나타냄
+            '1' => true,   // '1'은 true를 나타냄
+            _ => panic!("Unexpected operand: {}", c),  // 여기는 논리적 오류로 panic을 사용할 수 있음
+        },
+        ASTNode::Operator(op, left, right) => {
+            let left_val = evaluate_ast(left);
+            let right_val = evaluate_ast(right);
 
-// // Simplified version of eval_formula using the stack-based approach
-// pub fn eval_formula(formula: &str) -> bool {
-//     checked_eval_formula(formula).unwrap()
-// }
+            match op {
+                '&' => left_val && right_val, // AND 연산자
+                '|' => left_val || right_val, // OR 연산자
+                '^' => left_val ^ right_val,  // XOR 연산자
+                '!' => !left_val,             // NOT 연산자 (단항 연산자)
+                '>' => !left_val || right_val, // IMPL 연산자 (논리적 함의) : A->B = !A | B
+                '=' => left_val == right_val, // EQV 연산자
+                _ => panic!("Unexpected operator: {}", op),  // 여기도 논리적 오류로 panic 사용 가능
+            }
+        }
+    }
+}
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
 
-//     #[test]
-//     fn test_eval_formula() {
-//         assert!(!eval_formula("10&"));
-//         assert!(eval_formula("10|"));
-//         assert!(eval_formula("101|&"));
-//         assert!(eval_formula("1011||="));
-//         assert!(!eval_formula("010&1|&"));
-//         assert!(!eval_formula("1!"));
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//         assert!(!eval_formula("10>"));
-//         assert!(eval_formula("11>"));
-//         assert!(eval_formula("01>"));
-
-//         assert!(eval_formula("11="));
-//         assert!(!eval_formula("01="));
-
-//         assert!(!eval_formula("11^"));
-//         assert!(eval_formula("10^"));
-
-//         assert!(checked_eval_formula("1&").is_err());
-//     }
-// }
+    #[test]
+    fn test_eval_formula() {
+        assert_eq!(eval_formula("10&"), false);
+        assert_eq!(eval_formula("10|"), true);
+        assert_eq!(eval_formula("11>"), true);
+        assert_eq!(eval_formula("10="), false);
+        assert_eq!(eval_formula("1011||="), true);
+    }
+}

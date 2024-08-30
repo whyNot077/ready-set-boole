@@ -1,4 +1,5 @@
 use std::fmt;
+use anyhow::Result;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Token {
@@ -55,7 +56,7 @@ fn infix_to_postfix(tokens: &[Token]) -> Vec<Token> {
 
 // AST 노드 정의
 #[derive(Debug, PartialEq)]
-enum ASTNode {
+pub enum ASTNode {
     Operand(char),
     Operator(char, Box<ASTNode>, Box<ASTNode>),
 }
@@ -122,6 +123,11 @@ impl fmt::Display for ASTNode {
 // AST를 문자열로 변환하는 함수
 fn ast_to_string(ast: &ASTNode) -> String {
     format!("{}", ast)
+}
+
+pub fn get_ast(expression: &str) -> Result<ASTNode> {
+    let tokens = tokenize(expression);
+    postfix_to_ast(&tokens).ok_or_else(|| anyhow::anyhow!("Failed to generate AST"))
 }
 
 // 입력 문자열과 원래 표현식을 비교하는 함수
