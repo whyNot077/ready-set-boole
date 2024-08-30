@@ -49,12 +49,22 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
 pub fn negation_normal_form(formula: &str) -> Result<String> {
     let ast = get_ast(formula)?;  // AST를 생성
     let nnf_ast = to_nnf(&ast);   // NNF로 변환
-    Ok(ast_to_string(&nnf_ast))   // 결과를 문자열로 반환
+    Ok(nnf_to_postfix_string(&nnf_ast))   // 결과를 문자열로 반환
 }
 
 // AST를 문자열로 변환하는 함수 (이미 주어진 코드 활용)
-fn ast_to_string(ast: &ASTNode) -> String {
-    format!("{}", ast)
+fn nnf_to_postfix_string(ast: &ASTNode) -> String {
+    match ast {
+        ASTNode::Operand(c) => c.to_string(),
+        ASTNode::Operator('!', left, _) => format!("{}!", nnf_to_postfix_string(left)),
+        ASTNode::Operator('&', left, right) => {
+            format!("{}{}&", nnf_to_postfix_string(left), nnf_to_postfix_string(right))
+        }
+        ASTNode::Operator('|', left, right) => {
+            format!("{}{}|", nnf_to_postfix_string(left), nnf_to_postfix_string(right))
+        }
+        _ => panic!("Unexpected operator"),
+    }
 }
 
 #[cfg(test)]
@@ -84,4 +94,15 @@ mod tests {
         // !(!A | !B & !C) -> !A | !B & !C
         assert_eq!(negation_normal_form("A!B!|C!&").unwrap(), "!A|!B&!C");
     }
+
+
+    #[test]
+    fn test_tough_nnf() {
+        // 좀 더 복잡한 NNF 변환 테스트
+        assert_eq!(negation_normal_form("A!!!").unwrap(), "A!");  // 중복된 부정 연산자 처리
+        assert_eq!(negation_normal_form("A!!!B!!!!!&").unwrap(), "A!B!&");  // 여러 중복된 부정 연산자 처리
+        assert_eq!(negation_normal_form("AB>!").unwrap(), "AB!&!|");  // 부정과 임플리케이션의 조합
+        assert_eq!(negation_normal_form("AB&!C|D!&!").unwrap(), "A!B!&C!|D!!&!|");  // 복잡한 조합
+    }
+
 }

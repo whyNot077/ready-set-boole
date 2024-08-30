@@ -119,8 +119,9 @@ impl fmt::Display for ASTNode {
     }
 }
 
+
 // AST를 문자열로 변환하는 함수
-fn ast_to_string(ast: &ASTNode) -> String {
+pub fn ast_to_string(ast: &ASTNode) -> String {
     format!("{}", ast)
 }
 

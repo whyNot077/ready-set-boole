@@ -1,89 +1,105 @@
-// use crate::ex03::ast::Node;
-// use crate::ex05::negation_normal_form::build_tree;
-// use anyhow::{Result, anyhow};
-// use std::rc::Rc;
-// use std::cell::RefCell;
+use crate::ex03::ast::{ASTNode, get_ast};
+use crate::ex05::negation_normal_form::to_nnf;
 
-// fn to_cnf_string(node: &Rc<RefCell<Node>>) -> Result<String> {
-//     match &*node.borrow() {
-//         Node {
-//             operator: Some(b'|'),
-//             children: Some([left, right]),
-//             ..
-//         } => {
-//             // Distribute over conjunctions (A | (B & C)) -> (A | B) & (A | C)
-//             if let Node {
-//                 operator: Some(b'&'),
-//                 ..
-//             } = *left.borrow()
-//             {
-//                 let a_or_b = to_cnf_string(&Rc::new(RefCell::new(Node::new_operator(
-//                     b'|', Rc::clone(&left.borrow().children.as_ref().unwrap()[0]), Some(Rc::clone(right)),
-//                 ))))?;
-//                 let a_or_c = to_cnf_string(&Rc::new(RefCell::new(Node::new_operator(
-//                     b'|', Rc::clone(&left.borrow().children.as_ref().unwrap()[1]), Some(Rc::clone(right)),
-//                 ))))?;
-//                 return Ok(format!("{}{}&", a_or_b, a_or_c));
-//             }
+/// CNF로 변환하는 함수
+pub fn to_cnf(ast: &ASTNode) -> ASTNode {
+    match ast {
+        // 기본적인 피연산자는 그대로 유지
+        ASTNode::Operand(_) => ast.clone(),
 
-//             if let Node {
-//                 operator: Some(b'&'),
-//                 ..
-//             } = *right.borrow()
-//             {
-//                 let a_or_b = to_cnf_string(&Rc::new(RefCell::new(Node::new_operator(
-//                     b'|', Rc::clone(left), Some(Rc::clone(&right.borrow().children.as_ref().unwrap()[0])),
-//                 ))))?;
-//                 let a_or_c = to_cnf_string(&Rc::new(RefCell::new(Node::new_operator(
-//                     b'|', Rc::clone(left), Some(Rc::clone(&right.borrow().children.as_ref().unwrap()[1])),
-//                 ))))?;
-//                 return Ok(format!("{}{}&", a_or_b, a_or_c));
-//             }
+        // AND 연산자는 재귀적으로 적용
+        ASTNode::Operator('&', left, right) => {
+            let left_cnf = to_cnf(left);
+            let right_cnf = to_cnf(right);
+            ASTNode::Operator('&', Box::new(left_cnf), Box::new(right_cnf))
+        }
 
-//             let left_str = to_cnf_string(left)?;
-//             let right_str = to_cnf_string(right)?;
-//             Ok(format!("{}{}|", left_str, right_str))
-//         }
-//         Node {
-//             operator: Some(b'&'),
-//             children: Some([left, right]),
-//             ..
-//         } => {
-//             let left_str = to_cnf_string(left)?;
-//             let right_str = to_cnf_string(right)?;
-//             Ok(format!("{}{}&", left_str, right_str))
-//         }
-//         Node {
-//             operator: Some(b'!'),
-//             children: Some([child, ..]),
-//             ..
-//         } => Ok(format!("{}!", to_cnf_string(child)?)),
-//         Node {
-//             variable: Some(var), ..
-//         } => Ok((*var as char).to_string()),
-//         _ => Err(anyhow!("Unexpected node structure")),
-//     }
-// }
+        // OR 연산자는 분배 법칙 적용
+        ASTNode::Operator('|', left, right) => {
+            let left_cnf = to_cnf(left);
+            let right_cnf = to_cnf(right);
 
-// pub fn conjunctive_normal_form(formula: &str) -> Result<String> {
-//     // Build the AST using the formula string
-//     let tree = build_tree(formula)?;
-//     // Convert the AST to its CNF string representation
-//     to_cnf_string(&tree)
-// }
+            match (left_cnf, right_cnf) {
+                // A | (B & C) => (A | B) & (A | C)
+                (ASTNode::Operator('&', ll, lr), rc) => {
+                    ASTNode::Operator('&',
+                        Box::new(to_cnf(&ASTNode::Operator('|', ll, Box::new(rc.clone())))),
+                        Box::new(to_cnf(&ASTNode::Operator('|', lr, Box::new(rc))))
+                    )
+                }
+                // (A & B) | C => (A | C) & (B | C)
+                (lc, ASTNode::Operator('&', rl, rr)) => {
+                    ASTNode::Operator('&',
+                        Box::new(to_cnf(&ASTNode::Operator('|', Box::new(lc.clone()), rl))),
+                        Box::new(to_cnf(&ASTNode::Operator('|', Box::new(lc), rr)))
+                    )
+                }
+                // 나머지 경우는 OR 연산자 그대로 유지
+                (lc, rc) => ASTNode::Operator('|', Box::new(lc), Box::new(rc)),
+            }
+        }
+
+        // 나머지 연산자에 대해 재귀적으로 변환
+        ASTNode::Operator(op, left, right) => {
+            let left_cnf = to_cnf(left);
+            let right_cnf = to_cnf(right);
+            ASTNode::Operator(*op, Box::new(left_cnf), Box::new(right_cnf))
+        }
+    }
+}
+
+/// 주어진 논리식을 CNF로 변환하는 함수
+pub fn conjunctive_normal_form(formula: &str) -> String {
+    let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
+    let nnf_ast = to_nnf(&ast);  // NNF로 변환
+    let cnf_ast = to_cnf(&nnf_ast);  // CNF로 변환
+    cnf_to_postfix_string(&cnf_ast)  // 결과를 후위 표기법 문자열로 반환
+}
+
+// CNF로 변환된 AST를 후위 표기법 문자열로 변환하는 함수
+fn cnf_to_postfix_string(ast: &ASTNode) -> String {
+    match ast {
+        ASTNode::Operand(c) => c.to_string(),
+        ASTNode::Operator('!', left, _) => format!("{}!", cnf_to_postfix_string(left)),
+        ASTNode::Operator('&', left, right) => {
+            format!("{}{}&", cnf_to_postfix_string(left), cnf_to_postfix_string(right))
+        }
+        ASTNode::Operator('|', left, right) => {
+            format!("{}{}|", cnf_to_postfix_string(left), cnf_to_postfix_string(right))
+        }
+        _ => panic!("Unexpected operator"),
+    }
+}
 
 // #[cfg(test)]
 // mod tests {
 //     use super::*;
 
 //     #[test]
-//     fn test_conjunctive_normal_form() {
-//         assert_eq!(conjunctive_normal_form("AB&!").unwrap(), "A!B!|");
-//         assert_eq!(conjunctive_normal_form("AB|!").unwrap(), "A!B!&");
-//         assert_eq!(conjunctive_normal_form("AB|C&").unwrap(), "AB|C&");
-//         assert_eq!(conjunctive_normal_form("AB|C|D|").unwrap(), "ABC|D|");
-//         assert_eq!(conjunctive_normal_form("AB&C&D&").unwrap(), "ABCD&&&");
-//         assert_eq!(conjunctive_normal_form("AB&!C!|").unwrap(), "A!B!C!||");
-//         assert_eq!(conjunctive_normal_form("AB|!C!&").unwrap(), "A!B!C!&&");
+//     fn test_cnf_conversion() {
+//         assert_eq!(conjunctive_normal_form("AB&!"), "A!B!|");
+//         assert_eq!(conjunctive_normal_form("AB|!"), "A!B!&");
+//         assert_eq!(conjunctive_normal_form("AB|C&"), "AB|C&");
+//         assert_eq!(conjunctive_normal_form("AB|C|D|"), "ABCD|||"); // 수정된 부분
+//         assert_eq!(conjunctive_normal_form("AB&C&D&"), "ABCD&&&");
+//         assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");
+//         assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");
+//     }
+
+//     #[test]
+//     fn test_basic_nnf() {
+//         // 간단한 NNF 변환 테스트
+//         assert_eq!(conjunctive_normal_form("AB>"), "A!B|");  // A > B -> !A | B
+//         assert_eq!(conjunctive_normal_form("AB="), "AB&A!B!&|");  // A = B -> (A & B) | (!A & !B)
+//         assert_eq!(conjunctive_normal_form("A!!!!"), "A");  // 중복된 부정 연산자 처리
+//     }
+
+//     #[test]
+//     fn test_str_conversion() {
+//         // 다양한 논리식의 문자열 변환 테스트
+//         assert_eq!(conjunctive_normal_form("A!"), "A!");  // 단순 부정
+//         assert_eq!(conjunctive_normal_form("AB|"), "AB|");  // 단순 OR
+//         assert_eq!(conjunctive_normal_form("ABC&&"), "AB&C&");  // 다중 AND
+//         assert_eq!(conjunctive_normal_form("AB&C!|"), "A!B&C|");  // 혼합된 연산자
 //     }
 // }
