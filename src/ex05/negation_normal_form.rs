@@ -54,17 +54,7 @@ pub fn negation_normal_form(formula: &str) -> Result<String> {
 
 // AST를 문자열로 변환하는 함수 (이미 주어진 코드 활용)
 fn nnf_to_postfix_string(ast: &ASTNode) -> String {
-    match ast {
-        ASTNode::Operand(c) => c.to_string(),
-        ASTNode::Operator('!', left, _) => format!("{}!", nnf_to_postfix_string(left)),
-        ASTNode::Operator('&', left, right) => {
-            format!("{}{}&", nnf_to_postfix_string(left), nnf_to_postfix_string(right))
-        }
-        ASTNode::Operator('|', left, right) => {
-            format!("{}{}|", nnf_to_postfix_string(left), nnf_to_postfix_string(right))
-        }
-        _ => panic!("Unexpected operator"),
-    }
+    format!("{}", ast)
 }
 
 #[cfg(test)]
