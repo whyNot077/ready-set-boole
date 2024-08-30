@@ -55,7 +55,7 @@ fn infix_to_postfix(tokens: &[Token]) -> Vec<Token> {
 }
 
 // AST 노드 정의
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ASTNode {
     Operand(char),
     Operator(char, Box<ASTNode>, Box<ASTNode>),
@@ -110,7 +110,6 @@ impl fmt::Display for ASTNode {
             ASTNode::Operand(c) => write!(f, "{}", c),
             ASTNode::Operator(op, left, right) => {
                 if *op == '!' {
-                    // NOT 연산자는 단항이므로 오른쪽 자식이 없음
                     write!(f, "{}{}", op, left)
                 } else {
                     write!(f, "{}{}{}", left, op, right)
@@ -130,7 +129,7 @@ pub fn get_ast(expression: &str) -> Result<ASTNode> {
     postfix_to_ast(&tokens).ok_or_else(|| anyhow::anyhow!("Failed to generate AST"))
 }
 
-// 입력 문자열과 원래 표현식을 비교하는 함수
+// infix로 들어왔을 때 postfix로 변환한 후 다시 AST로 변환하여 원래 수식과 비교
 pub fn check_ast_string(expression: &str) {
     let tokens = tokenize(expression);
     let postfix_tokens: Vec<Token> = infix_to_postfix(&tokens);
