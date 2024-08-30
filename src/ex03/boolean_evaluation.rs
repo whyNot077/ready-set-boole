@@ -31,29 +31,6 @@ pub fn evaluate_ast(node: &ASTNode) -> bool {
     }
 }
 
-// fn evaluate_ast(node: &ASTNode, var_map: &HashMap<char, bool>) -> bool {
-//     match node {
-//         ASTNode::Operand(c) => {
-//             match c {
-//                 '0' => false,  // '0'은 false를 나타냄
-//                 '1' => true,   // '1'은 true를 나타냄
-//                 _ if c.is_alphabetic() => *var_map.get(c).unwrap_or_else(|| panic!("Variable {} not found in map", c)),
-//                 _ => panic!("Unexpected operand: {}", c),  // 예상하지 못한 피연산자는 패닉 발생
-//             }
-//         }
-//         ASTNode::Operator('!', left, _) => {
-//             let val = evaluate_ast(left, var_map);
-//             !val
-//         }
-//         ASTNode::Operator(op, left, right) => {
-//             let left_val = evaluate_ast(left, var_map);
-//             let right_val = evaluate_ast(right, var_map);
-//             apply_operator(*op, left_val, right_val)
-//         }
-//     }
-// }
-
-
 /// 주어진 연산자와 두 피연산자 값을 사용해 논리 연산을 수행하는 함수
 pub fn apply_operator(op: char, left_val: bool, right_val: bool) -> bool {
     match op {
