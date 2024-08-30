@@ -58,17 +58,7 @@ pub fn conjunctive_normal_form(formula: &str) -> String {
 
 // CNF로 변환된 AST를 후위 표기법 문자열로 변환하는 함수
 fn cnf_to_postfix_string(ast: &ASTNode) -> String {
-    match ast {
-        ASTNode::Operand(c) => c.to_string(),
-        ASTNode::Operator('!', left, _) => format!("{}!", cnf_to_postfix_string(left)),
-        ASTNode::Operator('&', left, right) => {
-            format!("{}{}&", cnf_to_postfix_string(left), cnf_to_postfix_string(right))
-        }
-        ASTNode::Operator('|', left, right) => {
-            format!("{}{}|", cnf_to_postfix_string(left), cnf_to_postfix_string(right))
-        }
-        _ => panic!("Unexpected operator"),
-    }
+    format!("{}", ast)
 }
 
 // #[cfg(test)]
@@ -80,12 +70,12 @@ fn cnf_to_postfix_string(ast: &ASTNode) -> String {
 //         assert_eq!(conjunctive_normal_form("AB&!"), "A!B!|");
 //         assert_eq!(conjunctive_normal_form("AB|!"), "A!B!&");
 //         assert_eq!(conjunctive_normal_form("AB|C&"), "AB|C&");
-//         assert_eq!(conjunctive_normal_form("AB|C|D|"), "ABCD|||"); // 수정된 부분
+//         assert_eq!(conjunctive_normal_form("AB|C|D|"), "ABCD|||");
 //         assert_eq!(conjunctive_normal_form("AB&C&D&"), "ABCD&&&");
 //         assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");
 //         assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");
 //     }
-
+// }
 //     #[test]
 //     fn test_basic_nnf() {
 //         // 간단한 NNF 변환 테스트
@@ -94,12 +84,12 @@ fn cnf_to_postfix_string(ast: &ASTNode) -> String {
 //         assert_eq!(conjunctive_normal_form("A!!!!"), "A");  // 중복된 부정 연산자 처리
 //     }
 
-//     #[test]
-//     fn test_str_conversion() {
-//         // 다양한 논리식의 문자열 변환 테스트
-//         assert_eq!(conjunctive_normal_form("A!"), "A!");  // 단순 부정
-//         assert_eq!(conjunctive_normal_form("AB|"), "AB|");  // 단순 OR
-//         assert_eq!(conjunctive_normal_form("ABC&&"), "AB&C&");  // 다중 AND
-//         assert_eq!(conjunctive_normal_form("AB&C!|"), "A!B&C|");  // 혼합된 연산자
-//     }
-// }
+// //     #[test]
+// //     fn test_str_conversion() {
+// //         // 다양한 논리식의 문자열 변환 테스트
+// //         assert_eq!(conjunctive_normal_form("A!"), "A!");  // 단순 부정
+// //         assert_eq!(conjunctive_normal_form("AB|"), "AB|");  // 단순 OR
+// //         assert_eq!(conjunctive_normal_form("ABC&&"), "AB&C&");  // 다중 AND
+// //         assert_eq!(conjunctive_normal_form("AB&C!|"), "A!B&C|");  // 혼합된 연산자
+// //     }
+// // }
