@@ -108,25 +108,11 @@ impl fmt::Display for ASTNode {
         match self {
             ASTNode::Operand(c) => write!(f, "{}", c),
             ASTNode::Operator(op, left, right) => {
-                let left_needs_parens = matches!(**left, ASTNode::Operator(l_op, _, _) if precedence(l_op) < precedence(*op));
-                let right_needs_parens = matches!(**right, ASTNode::Operator(r_op, _, _) if precedence(r_op) <= precedence(*op));
-                
                 if *op == '!' {
+                    // NOT 연산자는 단항이므로 오른쪽 자식이 없음
                     write!(f, "{}{}", op, left)
                 } else {
-                    if left_needs_parens {
-                        write!(f, "({})", left)?;
-                    } else {
-                        write!(f, "{}", left)?;
-                    }
-
-                    write!(f, "{}", op)?;
-
-                    if right_needs_parens {
-                        write!(f, "({})", right)
-                    } else {
-                        write!(f, "{}", right)
-                    }
+                    write!(f, "{}{}{}", left, op, right)
                 }
             }
         }
