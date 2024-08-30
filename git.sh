@@ -1,4 +1,4 @@
 #!/bin/bash
 git add .
-git commit -m "negation_normal_form"
+git commit -m "truth_table"
 git push
