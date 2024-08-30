@@ -71,6 +71,12 @@ mod tests {
 
         // !(!(A | B)) -> A | B
         assert_eq!(negation_normal_form("AB|!!").unwrap(), "A|B");
+
+        // A & (B | C) -> A & B | A & C
+        assert_eq!(negation_normal_form("ABC|&").unwrap(), "A&B|A&C");
+
+        // A | (B & C) -> A | B & A | C
+        assert_eq!(negation_normal_form("ABC&|").unwrap(), "A|B&A|C");
         
         // A > B -> !A | B
         assert_eq!(negation_normal_form("AB>").unwrap(), "!A|B");
@@ -89,12 +95,6 @@ mod tests {
 
         // A > B -> !A | B
         assert_eq!(negation_normal_form("AB>").unwrap(), "!A|B");
-
-        // A & (B | C) -> A & B | A & C
-        assert_eq!(negation_normal_form("ABC|&").unwrap(), "A&B|A&C");
-
-        // A | (B & C) -> A | B & A | C
-        assert_eq!(negation_normal_form("ABC&|").unwrap(), "A|B&A|C");
     }
 
 
