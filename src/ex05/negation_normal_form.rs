@@ -6,7 +6,6 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
     match ast {
         // 기본적인 피연산자는 그대로 유지
         ASTNode::Operand(_) => ast.clone(),
-
         // 이중 부정 제거: !(!A) => A
         ASTNode::Operator('!', operand, _) => {
             if let ASTNode::Operator('!', inner_operand, _) = &**operand {
@@ -98,12 +97,12 @@ mod tests {
     }
 
 
-    // #[test]
-    // fn test_tough_nnf() {
-    //     // 좀 더 복잡한 NNF 변환 테스트
-    //     assert_eq!(negation_normal_form("A!!!B!!!!!&").unwrap(), "A!B!&");  // 여러 중복된 부정 연산자 처리
-    //     assert_eq!(negation_normal_form("AB>!").unwrap(), "AB!&!|");  // 부정과 임플리케이션의 조합
-    //     assert_eq!(negation_normal_form("AB&!C|D!&!").unwrap(), "A!B!&C!|D!!&!|");  // 복잡한 조합
-    // }
+    #[test]
+    fn test_tough_nnf() {
+        // 좀 더 복잡한 NNF 변환 테스트
+        assert_eq!(negation_normal_form("A!!!B!!!!!&").unwrap(), "A!B!&");  // 여러 중복된 부정 연산자 처리
+        assert_eq!(negation_normal_form("AB>!").unwrap(), "AB!&!|");  // 부정과 임플리케이션의 조합
+        assert_eq!(negation_normal_form("AB&!C|D!&!").unwrap(), "A!B!&C!|D!!&!|");  // 복잡한 조합
+    }
 
 }
