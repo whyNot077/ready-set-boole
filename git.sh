@@ -1,4 +1,4 @@
 #!/bin/bash
 git add .
-git commit -m "cnf"
+git commit -m "add test"
 git push

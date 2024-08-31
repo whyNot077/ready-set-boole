@@ -94,6 +94,27 @@ mod tests {
         assert_eq!(conjunctive_normal_form("AB&C&D&"), "ABCD&&&");
         assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");
         assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");
+        // Complex combinations of ANDs and ORs
+        assert_eq!(conjunctive_normal_form("A!BC|&"), "A!B|A!C|&"); // !(A & (B | C)) -> !A | (!B & !C)
+        assert_eq!(conjunctive_normal_form("AB|CD|&"), "ABCD||&"); // (A | B) & (C | D)
+        assert_eq!(conjunctive_normal_form("AB&CD&|"), "A|C&B|D&"); // (A & B) | (C & D) -> (A | C) & (B | D)
+        assert_eq!(conjunctive_normal_form("AB&CD&!"), "A!B!|C!D!|&"); // !(A & B) | !(C & D) -> (!A | !B) & (!C | !D)
+
+        // Double Negation
+        assert_eq!(conjunctive_normal_form("A!!"), "A"); // Double negation !!A -> A
+        assert_eq!(conjunctive_normal_form("AB!!|"), "AB|"); // Double negation !!(A | B) -> A | B
+
+        // Implications and equivalences
+        assert_eq!(conjunctive_normal_form("AB>"), "A!B|"); // A > B -> !A | B
+        assert_eq!(conjunctive_normal_form("AB="), "A!B|B!A|&"); // A = B -> (A & B) | (!A & !B)
+        assert_eq!(conjunctive_normal_form("AB^"), "A!B&B!A|"); // A XOR B -> (A & !B) | (!A & B)
+
+        // Complex nested operations
+        assert_eq!(conjunctive_normal_form("A!B|CD&>"), "A!B|!C!D||"); // (A! | B) > (C & D) -> !A & !B | (C | D)
+        assert_eq!(conjunctive_normal_form("AB|CD&EF|&"), "A|C|B|F&E|D|"); // (A | B) & (C | D) & (E | F)
+        assert_eq!(conjunctive_normal_form("AB&C|DE|&"), "A|D|B|E|C|&"); // (A | B) & (C | D) & E
+
+        // Complex equivalence
+        assert_eq!(conjunctive_normal_form("ABC&|!"), "A!B!|C!&"); // !(A | (B & C)) -> !A & (!B | !C)
     }
 }
-

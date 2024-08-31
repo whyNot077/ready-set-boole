@@ -65,37 +65,38 @@ mod tests {
 
     #[test]
     fn test_nnf_conversion() {
-        // !(A & B) -> !A | !B
-        assert_eq!(negation_normal_form("AB&!"), "!A|!B");
+        // 기본적인 NNF 변환
+        assert_eq!(negation_normal_form("AB&!"), "!A|!B"); // !(A & B) -> !A | !B
+        assert_eq!(negation_normal_form("AB|!"), "!A&!B"); // !(A | B) -> !A & !B
+        assert_eq!(negation_normal_form("AB|!!"), "A|B");  // !(!(A | B)) -> A | B
+        assert_eq!(negation_normal_form("AB>"), "!A|B"); // A > B -> !A | B
+        assert_eq!(negation_normal_form("AB="), "A&B|!A&!B"); // A = B -> (A & B) | (!A & !B)
+        assert_eq!(negation_normal_form("AB|C&!"), "!A&!B|!C"); // ! (A | B & C) -> !A | !B & !C
+        assert_eq!(negation_normal_form("A!B!|C!&"), "!A|!B&!C"); // !(!A | !B & !C) -> !A | !B & !C
+        assert_eq!(negation_normal_form("A!!"), "A"); // !!A -> A
+        assert_eq!(negation_normal_form("AB>"), "!A|B"); // A > B -> !A | B
+        assert_eq!(negation_normal_form("A!!!"), "!A"); // !!!A -> !A
 
-        // !(A | B) -> !A & !B
-        assert_eq!(negation_normal_form("AB|!"), "!A&!B");
+        // 추가적인 테스트 케이스
+        // 이중 부정
+        assert_eq!(negation_normal_form("A!!"), "A"); // !!A -> A
+        assert_eq!(negation_normal_form("A!!!!"), "A"); // !!!!A -> A
+        assert_eq!(negation_normal_form("AB!!&"), "A&B"); // !!(A & B) -> A & B
 
-        // !(!(A | B)) -> A | B
-        assert_eq!(negation_normal_form("AB|!!"), "A|B");
-        
-        // A > B -> !A | B
-        assert_eq!(negation_normal_form("AB>"), "!A|B");
+        // 복잡한 논리식
+        assert_eq!(negation_normal_form("AB|C&!D|!"), "!A&!B|!C|D"); // !((A | B) & (!C | D)) -> !A & !B | !C | D
+        assert_eq!(negation_normal_form("AB&CD|!|"), "(!C|!D)|(A&B)"); // (A & B) | !(C | D) -> (A & B) | (!C | !D)
+        assert_eq!(negation_normal_form("AB!|CD&"), "A|!B&C&D"); // (A | !B) & (C & D) -> A | !B & C & D
+        assert_eq!(negation_normal_form("AB!|C!D!&|"), "A|!B|C|!D"); // (A | !B) | (C & !D) -> A | !B | C | !D
 
-        // A = B -> (A & B) | (!A & !B)
-        assert_eq!(negation_normal_form("AB="), "A&B|!A&!B");
+        // 임플리케이션과 동치 연산자
+        assert_eq!(negation_normal_form("ABC>="), "A!|B!|C|A!&B!|C!&A&B|!C"); // A > B = C -> (!A | B) & (A | !B)
+        assert_eq!(negation_normal_form("AB>C="), "A!|B!|C|A!&B!|C!&A&B|!C"); // (A > B) = C -> (A > B) = C
+        assert_eq!(negation_normal_form("A!!B>!"), "A!|!B"); // !!A > !B -> A > !B
+        assert_eq!(negation_normal_form("AB>C!|!"), "!A&B|!C"); // !(A > B | !C) -> !A & B | !C
 
-        // ! (A | B & C) -> !A | !B & !C
-        assert_eq!(negation_normal_form("AB|C&!"), "!A&!B|!C");
-
-        // !(!A | !B & !C) -> !A | !B & !C
-        assert_eq!(negation_normal_form("A!B!|C!&"), "!A|!B&!C");
-
-        // !!A -> A
-        assert_eq!(negation_normal_form("A!!"), "A");
-
-        // A > B -> !A | B
-        assert_eq!(negation_normal_form("AB>"), "!A|B");
-
-        // !!A -> A
-        assert_eq!(negation_normal_form("A!!"), "A");
-
-        // !!!A -> !A
-        assert_eq!(negation_normal_form("A!!!"), "!A");
+        // XOR 연산자
+        assert_eq!(negation_normal_form("AB^"), "(A&!B)|(!A&B)"); // A XOR B -> (A & !B) | (!A & B)
+        assert_eq!(negation_normal_form("A!B^C&"), "(!A&!B&C)|(!A&B&!C)|(A&!B&!C)|(A&B&C)"); // !((A XOR B) & C) -> ((!A & !B & C) | (!A & B & !C) | (A & !B & !C) | (A & B & C))
     }
 }
