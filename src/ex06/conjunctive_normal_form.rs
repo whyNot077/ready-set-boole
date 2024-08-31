@@ -1,4 +1,4 @@
-use crate::ex03::ast::{ASTNode, get_ast};
+use crate::ex03::ast::{ASTNode, get_ast, ast_to_postfix_string};
 use crate::ex05::negation_normal_form::to_nnf;
 
 /// CNF로 변환하는 함수
@@ -79,21 +79,7 @@ pub fn conjunctive_normal_form(formula: &str) -> String {
     let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
     let nnf_ast = to_nnf(&ast);  // NNF로 변환
     let cnf_ast = to_cnf(&nnf_ast);  // CNF로 변환
-    cnf_to_postfix_string(&cnf_ast)  // 결과를 후위 표기법 문자열로 반환
-}
-
-// CNF로 변환된 AST를 후위 표기법 문자열로 변환하는 함수
-fn cnf_to_postfix_string(ast: &ASTNode) -> String {
-    match ast {
-        ASTNode::Operand(c) => c.to_string(),
-        ASTNode::Operator(op, left, right) => {
-            if *op == '!' {
-                format!("{}{}", cnf_to_postfix_string(left), op)
-            } else {
-                format!("{}{}{}", cnf_to_postfix_string(left), cnf_to_postfix_string(right), op)
-            }
-        }
-    }
+    ast_to_postfix_string(&cnf_ast)  // 결과를 후위 표기법 문자열로 반환
 }
 
 #[cfg(test)]

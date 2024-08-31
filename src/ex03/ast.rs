@@ -56,7 +56,7 @@ fn tokenize(expression: &str) -> Vec<Token> {
     tokens
 }
 
-// fmt::Display 트레이트 구현을 통해 AST를 문자열로 변환
+// fmt::Display 트레이트 구현을 통해 AST를 문자열로 변환 : infix 표기법
 impl fmt::Display for ASTNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -74,11 +74,24 @@ impl fmt::Display for ASTNode {
 
 
 // AST를 문자열로 변환하는 함수
-pub fn ast_to_string(ast: &ASTNode) -> String {
+pub fn ast_to_infix_string(ast: &ASTNode) -> String {
     format!("{}", ast)
 }
 
 pub fn get_ast(expression: &str) -> Result<ASTNode> {
     let tokens = tokenize(expression);
     postfix_to_ast(&tokens).ok_or_else(|| anyhow::anyhow!("Failed to generate AST"))
+}
+
+pub fn ast_to_postfix_string(ast: &ASTNode) -> String {
+    match ast {
+        ASTNode::Operand(c) => c.to_string(),
+        ASTNode::Operator(op, left, right) => {
+            if *op == '!' {
+                format!("{}{}", ast_to_postfix_string(left), op)
+            } else {
+                format!("{}{}{}", ast_to_postfix_string(left), ast_to_postfix_string(right), op)
+            }
+        }
+    }
 }

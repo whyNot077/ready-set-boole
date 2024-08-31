@@ -1,4 +1,4 @@
-use crate::ex03::ast::{ASTNode, get_ast};
+use crate::ex03::ast::{ASTNode, get_ast, ast_to_infix_string};
 
 
 /// NNF로 변환하는 함수
@@ -56,12 +56,7 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
 pub fn negation_normal_form(formula: &str) -> String {
     let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
     let nnf_ast = to_nnf(&ast);  // NNF로 변환
-    nnf_to_infix_string(&nnf_ast)  // 결과를 중위 표기법 문자열로 반환
-}
-
-// AST를 문자열로 변환하는 함수
-fn nnf_to_infix_string(ast: &ASTNode) -> String {
-    format!("{}", ast)
+    ast_to_infix_string(&nnf_ast)  // 결과를 중위 표기법 문자열로 반환
 }
 
 #[cfg(test)]
