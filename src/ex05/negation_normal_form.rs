@@ -47,52 +47,6 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
             ASTNode::Operator('|', Box::new(left_and_right), Box::new(not_left_and_not_right))
         }
 
-        // 분배법칙 적용: `|`에 대해 분배법칙 적용
-        ASTNode::Operator('|', left, right) => {
-            let left_nnf = to_nnf(left);
-            let right_nnf = to_nnf(right);
-
-            match (&left_nnf, &right_nnf) {
-                // A | (B & C) => (A | B) & (A | C)
-                (ASTNode::Operand(_), ASTNode::Operator('&', rl, rr)) => {
-                    ASTNode::Operator('&',
-                        Box::new(ASTNode::Operator('|', Box::new(left_nnf.clone()), rl.clone())),
-                        Box::new(ASTNode::Operator('|', Box::new(left_nnf), rr.clone())))
-                }
-                // (A & B) | C => (A | C) & (B | C)
-                (ASTNode::Operator('&', ll, lr), ASTNode::Operand(_)) => {
-                    ASTNode::Operator('&',
-                        Box::new(ASTNode::Operator('|', ll.clone(), Box::new(right_nnf.clone()))),
-                        Box::new(ASTNode::Operator('|', lr.clone(), Box::new(right_nnf))))
-                }
-                // 나머지 경우는 OR 연산자 그대로 유지
-                _ => ASTNode::Operator('|', Box::new(left_nnf), Box::new(right_nnf)),
-            }
-        }
-
-        // 분배법칙 적용: `&`에 대해 분배법칙 적용
-        ASTNode::Operator('&', left, right) => {
-            let left_nnf = to_nnf(left);
-            let right_nnf = to_nnf(right);
-
-            match (&left_nnf, &right_nnf) {
-                // A & (B | C) => (A & B) | (A & C)
-                (ASTNode::Operand(_), ASTNode::Operator('|', rl, rr)) => {
-                    ASTNode::Operator('|',
-                        Box::new(ASTNode::Operator('&', Box::new(left_nnf.clone()), rl.clone())),
-                        Box::new(ASTNode::Operator('&', Box::new(left_nnf), rr.clone())))
-                }
-                // (A | B) & C => (A & C) | (B & C)
-                (ASTNode::Operator('|', ll, lr), ASTNode::Operand(_)) => {
-                    ASTNode::Operator('|',
-                        Box::new(ASTNode::Operator('&', ll.clone(), Box::new(right_nnf.clone()))),
-                        Box::new(ASTNode::Operator('&', lr.clone(), Box::new(right_nnf))))
-                }
-                // 나머지 경우는 AND 연산자 그대로 유지
-                _ => ASTNode::Operator('&', Box::new(left_nnf), Box::new(right_nnf)),
-            }
-        }
-
         // 나머지 연산자에 대해 NNF를 적용하여 재귀적으로 변환
         ASTNode::Operator(op, left, right) => {
             ASTNode::Operator(*op, Box::new(to_nnf(left)), Box::new(to_nnf(right)))
@@ -126,12 +80,6 @@ mod tests {
 
         // !(!(A | B)) -> A | B
         assert_eq!(negation_normal_form("AB|!!").unwrap(), "A|B");
-
-        // // A & (B | C) -> A & B | A & C
-        assert_eq!(negation_normal_form("ABC|&").unwrap(), "A&B|A&C");
-
-        // // A | (B & C) -> A | B & A | C
-        assert_eq!(negation_normal_form("ABC&|").unwrap(), "A|B&A|C");
         
         // A > B -> !A | B
         assert_eq!(negation_normal_form("AB>").unwrap(), "!A|B");

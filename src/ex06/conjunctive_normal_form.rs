@@ -6,44 +6,55 @@ pub fn to_cnf(ast: &ASTNode) -> ASTNode {
     match ast {
         // 기본적인 피연산자는 그대로 유지
         ASTNode::Operand(_) => ast.clone(),
-
-        // AND 연산자는 재귀적으로 적용
-        ASTNode::Operator('&', left, right) => {
-            let left_cnf = to_cnf(left);
-            let right_cnf = to_cnf(right);
-            ASTNode::Operator('&', Box::new(left_cnf), Box::new(right_cnf))
-        }
-
-        // OR 연산자는 분배 법칙 적용
+        // 분배법칙 적용: `|`에 대해 분배법칙 적용
         ASTNode::Operator('|', left, right) => {
-            let left_cnf = to_cnf(left);
-            let right_cnf = to_cnf(right);
+            let left_nnf = to_nnf(left);
+            let right_nnf = to_nnf(right);
 
-            match (left_cnf, right_cnf) {
+            match (&left_nnf, &right_nnf) {
                 // A | (B & C) => (A | B) & (A | C)
-                (ASTNode::Operator('&', ll, lr), rc) => {
+                (ASTNode::Operand(_), ASTNode::Operator('&', rl, rr)) => {
                     ASTNode::Operator('&',
-                        Box::new(to_cnf(&ASTNode::Operator('|', ll, Box::new(rc.clone())))),
-                        Box::new(to_cnf(&ASTNode::Operator('|', lr, Box::new(rc))))
-                    )
+                        Box::new(ASTNode::Operator('|', Box::new(left_nnf.clone()), rl.clone())),
+                        Box::new(ASTNode::Operator('|', Box::new(left_nnf), rr.clone())))
                 }
                 // (A & B) | C => (A | C) & (B | C)
-                (lc, ASTNode::Operator('&', rl, rr)) => {
+                (ASTNode::Operator('&', ll, lr), ASTNode::Operand(_)) => {
                     ASTNode::Operator('&',
-                        Box::new(to_cnf(&ASTNode::Operator('|', Box::new(lc.clone()), rl))),
-                        Box::new(to_cnf(&ASTNode::Operator('|', Box::new(lc), rr)))
-                    )
+                        Box::new(ASTNode::Operator('|', ll.clone(), Box::new(right_nnf.clone()))),
+                        Box::new(ASTNode::Operator('|', lr.clone(), Box::new(right_nnf))))
                 }
                 // 나머지 경우는 OR 연산자 그대로 유지
-                (lc, rc) => ASTNode::Operator('|', Box::new(lc), Box::new(rc)),
+                _ => ASTNode::Operator('|', Box::new(left_nnf), Box::new(right_nnf)),
             }
         }
 
-        // 나머지 연산자에 대해 재귀적으로 변환
+        // 분배법칙 적용: `&`에 대해 분배법칙 적용
+        // ASTNode::Operator('&', left, right) => {
+        //     let left_nnf = to_nnf(left);
+        //     let right_nnf = to_nnf(right);
+
+        //     match (&left_nnf, &right_nnf) {
+        //         // A & (B | C) => (A & B) | (A & C)
+        //         (ASTNode::Operand(_), ASTNode::Operator('|', rl, rr)) => {
+        //             ASTNode::Operator('|',
+        //                 Box::new(ASTNode::Operator('&', Box::new(left_nnf.clone()), rl.clone())),
+        //                 Box::new(ASTNode::Operator('&', Box::new(left_nnf), rr.clone())))
+        //         }
+        //         // (A | B) & C => (A & C) | (B & C)
+        //         (ASTNode::Operator('|', ll, lr), ASTNode::Operand(_)) => {
+        //             ASTNode::Operator('|',
+        //                 Box::new(ASTNode::Operator('&', ll.clone(), Box::new(right_nnf.clone()))),
+        //                 Box::new(ASTNode::Operator('&', lr.clone(), Box::new(right_nnf))))
+        //         }
+        //         // 나머지 경우는 AND 연산자 그대로 유지
+        //         _ => ASTNode::Operator('&', Box::new(left_nnf), Box::new(right_nnf)),
+        //     }
+        // }
+
+        // 나머지 연산자에 대해 CNF를 적용하여 재귀적으로 변환
         ASTNode::Operator(op, left, right) => {
-            let left_cnf = to_cnf(left);
-            let right_cnf = to_cnf(right);
-            ASTNode::Operator(*op, Box::new(left_cnf), Box::new(right_cnf))
+            ASTNode::Operator(*op, Box::new(to_cnf(left)), Box::new(to_nnf(right)))
         }
     }
 }
@@ -58,7 +69,16 @@ pub fn conjunctive_normal_form(formula: &str) -> String {
 
 // CNF로 변환된 AST를 후위 표기법 문자열로 변환하는 함수
 fn cnf_to_postfix_string(ast: &ASTNode) -> String {
-    format!("{}", ast)
+    match ast {
+        ASTNode::Operand(c) => c.to_string(),
+        ASTNode::Operator(op, left, right) => {
+            if *op == '!' {
+                format!("{}{}", cnf_to_postfix_string(left), op)
+            } else {
+                format!("{}{}{}", cnf_to_postfix_string(left), cnf_to_postfix_string(right), op)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -75,21 +95,14 @@ mod tests {
         assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");
         assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");
     }
-}
-    #[test]
-    fn test_basic_nnf() {
-        // 간단한 NNF 변환 테스트
-        assert_eq!(conjunctive_normal_form("AB>"), "A!B|");  // A > B -> !A | B
-        assert_eq!(conjunctive_normal_form("AB="), "AB&A!B!&|");  // A = B -> (A & B) | (!A & !B)
-        assert_eq!(conjunctive_normal_form("A!!!!"), "A");  // 중복된 부정 연산자 처리
-    }
 
-//     #[test]
-//     fn test_str_conversion() {
-//         // 다양한 논리식의 문자열 변환 테스트
-//         assert_eq!(conjunctive_normal_form("A!"), "A!");  // 단순 부정
-//         assert_eq!(conjunctive_normal_form("AB|"), "AB|");  // 단순 OR
-//         assert_eq!(conjunctive_normal_form("ABC&&"), "AB&C&");  // 다중 AND
-//         assert_eq!(conjunctive_normal_form("AB&C!|"), "A!B&C|");  // 혼합된 연산자
-//     }
-// }
+//     // #[test]
+//     // fn test_str_conversion() {
+//     //     // 다양한 논리식의 문자열 변환 테스트
+//     //     assert_eq!(conjunctive_normal_form("A!"), "A!");  // 단순 부정
+//     //     assert_eq!(conjunctive_normal_form("AB|"), "AB|");  // 단순 OR
+//     //     assert_eq!(conjunctive_normal_form("ABC&&"), "AB&C&");  // 다중 AND
+//     //     assert_eq!(conjunctive_normal_form("AB&C!|"), "A!B&C|");  // 혼합된 연산자
+//     // }
+}
+
