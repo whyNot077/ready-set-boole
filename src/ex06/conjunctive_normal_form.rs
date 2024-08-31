@@ -48,12 +48,11 @@ pub fn to_cnf(ast: &ASTNode) -> ASTNode {
             flatten_and(&to_cnf(left), &mut flattened_ands);
             flatten_and(&to_cnf(right), &mut flattened_ands);
 
-            let mut current_ast = flattened_ands.remove(0);
-            for node in flattened_ands {
-                current_ast = ASTNode::Operator('&', Box::new(current_ast), Box::new(node));
+            let mut current_ast = flattened_ands.pop().unwrap();
+            while let Some(next) = flattened_ands.pop() {
+                current_ast = ASTNode::Operator('&', Box::new(next), Box::new(current_ast));
             }
             current_ast
-
         }
 
         // 나머지 연산자에 대해 CNF를 적용하여 재귀적으로 변환
