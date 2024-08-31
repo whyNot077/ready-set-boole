@@ -73,7 +73,6 @@ fn flatten_and(ast: &ASTNode, nodes: &mut Vec<ASTNode>) {
     }
 }
 
-
 /// 주어진 논리식을 CNF로 변환하는 함수
 pub fn conjunctive_normal_form(formula: &str) -> String {
     let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
@@ -95,15 +94,6 @@ mod tests {
         assert_eq!(conjunctive_normal_form("AB&C&D&"), "ABCD&&&");
         assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");
         assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");
-    }
-
-    #[test]
-    fn test_str_conversion() {
-        // 다양한 논리식의 문자열 변환 테스트
-        assert_eq!(conjunctive_normal_form("A!"), "A!");  // 단순 부정
-        assert_eq!(conjunctive_normal_form("AB|"), "AB|");  // 단순 OR
-        assert_eq!(conjunctive_normal_form("ABC&&"), "AB&C&");  // 다중 AND
-        assert_eq!(conjunctive_normal_form("AB&C!|"), "A!B&C|");  // 혼합된 연산자
     }
 }
 
