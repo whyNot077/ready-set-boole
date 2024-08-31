@@ -1,4 +1,3 @@
-use anyhow::Result;
 use crate::ex03::ast::{ASTNode, get_ast};
 
 
@@ -54,11 +53,10 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
     }
 }
 
-/// 수식을 NNF로 변환하는 함수
-pub fn negation_normal_form(formula: &str) -> Result<String> {
-    let ast = get_ast(formula)?;  // AST를 생성
-    let nnf_ast = to_nnf(&ast);   // NNF로 변환
-    Ok(nnf_to_infix_string(&nnf_ast))   // 결과를 문자열로 반환
+pub fn negation_normal_form(formula: &str) -> String {
+    let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
+    let nnf_ast = to_nnf(&ast);  // NNF로 변환
+    nnf_to_infix_string(&nnf_ast)  // 결과를 중위 표기법 문자열로 반환
 }
 
 // AST를 문자열로 변환하는 함수
@@ -73,36 +71,36 @@ mod tests {
     #[test]
     fn test_nnf_conversion() {
         // !(A & B) -> !A | !B
-        assert_eq!(negation_normal_form("AB&!").unwrap(), "!A|!B");
+        assert_eq!(negation_normal_form("AB&!"), "!A|!B");
 
         // !(A | B) -> !A & !B
-        assert_eq!(negation_normal_form("AB|!").unwrap(), "!A&!B");
+        assert_eq!(negation_normal_form("AB|!"), "!A&!B");
 
         // !(!(A | B)) -> A | B
-        assert_eq!(negation_normal_form("AB|!!").unwrap(), "A|B");
+        assert_eq!(negation_normal_form("AB|!!"), "A|B");
         
         // A > B -> !A | B
-        assert_eq!(negation_normal_form("AB>").unwrap(), "!A|B");
+        assert_eq!(negation_normal_form("AB>"), "!A|B");
 
         // A = B -> (A & B) | (!A & !B)
-        assert_eq!(negation_normal_form("AB=").unwrap(), "A&B|!A&!B");
+        assert_eq!(negation_normal_form("AB="), "A&B|!A&!B");
 
         // ! (A | B & C) -> !A | !B & !C
-        assert_eq!(negation_normal_form("AB|C&!").unwrap(), "!A&!B|!C");
+        assert_eq!(negation_normal_form("AB|C&!"), "!A&!B|!C");
 
         // !(!A | !B & !C) -> !A | !B & !C
-        assert_eq!(negation_normal_form("A!B!|C!&").unwrap(), "!A|!B&!C");
+        assert_eq!(negation_normal_form("A!B!|C!&"), "!A|!B&!C");
 
         // !!A -> A
-        assert_eq!(negation_normal_form("A!!").unwrap(), "A");
+        assert_eq!(negation_normal_form("A!!"), "A");
 
         // A > B -> !A | B
-        assert_eq!(negation_normal_form("AB>").unwrap(), "!A|B");
+        assert_eq!(negation_normal_form("AB>"), "!A|B");
 
         // !!A -> A
-        assert_eq!(negation_normal_form("A!!").unwrap(), "A");
+        assert_eq!(negation_normal_form("A!!"), "A");
 
         // !!!A -> !A
-        assert_eq!(negation_normal_form("A!!!").unwrap(), "!A");
+        assert_eq!(negation_normal_form("A!!!"), "!A");
     }
 }
