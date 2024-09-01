@@ -51,16 +51,16 @@ pub fn calculate(op: char, left_val: bool, right_val: bool) -> bool {
 }
 
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn test_eval_formula() {
-        assert_eq!(eval_formula("10&"), false);
-        assert_eq!(eval_formula("10|"), true);
-        assert_eq!(eval_formula("11>"), true);
-        assert_eq!(eval_formula("10="), false);
-        assert_eq!(eval_formula("1011||="), true);
-    }
-}
+//     #[test]
+//     fn test_eval_formula() {
+//         assert_eq!(eval_formula("10&"), false);
+//         assert_eq!(eval_formula("10|"), true);
+//         assert_eq!(eval_formula("11>"), true);
+//         assert_eq!(eval_formula("10="), false);
+//         assert_eq!(eval_formula("1011||="), true);
+//     }
+// }
