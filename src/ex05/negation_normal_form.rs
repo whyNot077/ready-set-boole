@@ -1,17 +1,14 @@
 use crate::ex03::ast::{ASTNode, get_ast, ast_to_infix_string};
 
-
-/// NNF로 변환하는 함수
+// NNF로 변환하는 함수
 pub fn to_nnf(ast: &ASTNode) -> ASTNode {
     match ast {
-        // 기본적인 피연산자는 그대로 유지
         ASTNode::Operand(_) => ast.clone(),
 
-        // 이중 부정 제거: !(!A) => A
         ASTNode::Operator('!', operand, _) => {
             let operand = operand.as_ref();
             match operand {
-                ASTNode::Operator('!', inner_operand, _) => to_nnf(inner_operand),
+                ASTNode::Operator('!', inner_operand, _) => to_nnf(inner_operand), // 이중 부정 제거
                 ASTNode::Operator('&', left, right) => {
                     // 드모르간 법칙: !(A & B) => !A | !B
                     ASTNode::Operator('|',
@@ -28,16 +25,16 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
             }
         }
 
-        // 임플리케이션 변환: A > B => !A | B
         ASTNode::Operator('>', left, right) => {
+            // 임플리케이션 변환: A > B => !A | B
             ASTNode::Operator('|',
                 Box::new(to_nnf(&ASTNode::Operator('!', left.clone(), Box::new(ASTNode::Operand('\0'))))),
                 Box::new(to_nnf(right))
             )
         }
 
-        // 동등 연산자 처리: A = B => (A & B) | (!A & !B)
         ASTNode::Operator('=', left, right) => {
+            // 동등 연산자 처리: A = B => (A & B) | (!A & !B)
             let left_and_right = ASTNode::Operator('&', Box::new(to_nnf(left)), Box::new(to_nnf(right)));
             let not_left_and_not_right = ASTNode::Operator('&',
                 Box::new(to_nnf(&ASTNode::Operator('!', left.clone(), Box::new(ASTNode::Operand('\0'))))),
@@ -46,8 +43,8 @@ pub fn to_nnf(ast: &ASTNode) -> ASTNode {
             ASTNode::Operator('|', Box::new(left_and_right), Box::new(not_left_and_not_right))
         }
 
-        // 나머지 연산자에 대해 NNF를 적용하여 재귀적으로 변환
         ASTNode::Operator(op, left, right) => {
+            // 추가적인 연산자 우선순위 처리 필요시 여기에 로직 추가
             ASTNode::Operator(*op, Box::new(to_nnf(left)), Box::new(to_nnf(right)))
         }
     }
