@@ -11,7 +11,7 @@ enum Token {
 #[derive(Debug, PartialEq, Clone)]
 pub enum ASTNode {
     Operand(char),
-    Operator(char, Box<ASTNode>, Box<ASTNode>),
+    Operator(char, Box<ASTNode>, Option<Box<ASTNode>>),
 }
 
 // 후위 표기식에서 AST를 생성하는 함수
@@ -25,11 +25,11 @@ fn postfix_to_ast(tokens: &[Token]) -> Option<ASTNode> {
                 if *op == '!' {
                     // 논리 NOT 연산자는 단항 연산자이므로 하나의 피연산자만 필요
                     let operand = stack.pop()?;
-                    stack.push(ASTNode::Operator(*op, Box::new(operand), Box::new(ASTNode::Operand('\0')))); // 오른쪽 피연산자 없이 트리 구성
+                    stack.push(ASTNode::Operator(*op, Box::new(operand), None)); // 오른쪽 피연산자는 None으로 설정
                 } else {
                     let right = stack.pop()?;
                     let left = stack.pop()?;
-                    stack.push(ASTNode::Operator(*op, Box::new(left), Box::new(right)));
+                    stack.push(ASTNode::Operator(*op, Box::new(left), Some(Box::new(right)))); // Some으로 오른쪽 피연산자 설정
                 }
             }
         }
@@ -62,16 +62,12 @@ impl fmt::Display for ASTNode {
         match self {
             ASTNode::Operand(c) => write!(f, "{}", c),
             ASTNode::Operator(op, left, right) => {
-                if *op == '!' {
-                    write!(f, "{}{}", op, left)
-                } else {
-                    write!(f, "{}{}{}", left, op, right)
-                }
+                let right_node = right.as_ref().map(|r| &**r).unwrap_or(&ASTNode::Operand('\0'));
+                write!(f, "{}{}{}", left, op, right_node)
             }
         }
     }
 }
-
 
 // AST를 문자열로 변환하는 함수
 pub fn ast_to_infix_string(ast: &ASTNode) -> String {
@@ -87,11 +83,8 @@ pub fn ast_to_postfix_string(ast: &ASTNode) -> String {
     match ast {
         ASTNode::Operand(c) => c.to_string(),
         ASTNode::Operator(op, left, right) => {
-            if *op == '!' {
-                format!("{}{}", ast_to_postfix_string(left), op)
-            } else {
-                format!("{}{}{}", ast_to_postfix_string(left), ast_to_postfix_string(right), op)
-            }
+            let right_node = right.as_ref().map(|r| &**r).unwrap_or(&ASTNode::Operand('\0'));
+                format!("{}{}{}", ast_to_postfix_string(left), ast_to_postfix_string(right_node), op)
         }
     }
 }
