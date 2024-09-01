@@ -62,8 +62,10 @@ impl fmt::Display for ASTNode {
         match self {
             ASTNode::Operand(c) => write!(f, "{}", c),
             ASTNode::Operator(op, left, right) => {
-                let right_node = right.as_ref().map(|r| &**r).unwrap_or(&ASTNode::Operand('\0'));
-                write!(f, "{}{}{}", left, op, right_node)
+                match right {
+                    Some(r) => write!(f, "{}{}{}", left, op, r),
+                    None => write!(f, "{}{}", op, left),
+                }
             }
         }
     }
