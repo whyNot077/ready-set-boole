@@ -175,6 +175,7 @@ fn extract_vars(node: &ASTNode, vars: &mut HashSet<char>) {
 
 ### fmt
 
+- format! 매크로는 Rust의 표준 라이브러리에서 제공하는 매크로로, 문자열을 생성하기 위해 사용됩니다. format!은 내부적으로 Display 트레이트를 구현한 타입에 대해 fmt 메서드를 호출합니다.
 
 
 
