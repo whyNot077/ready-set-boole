@@ -149,6 +149,24 @@ pub fn get_ast(expression: &str) -> Result<ASTNode> {
 - ok_or_else는 Option<T> 타입에서 사용할 수 있는 메서드입니다.
 - ok_or_else는 Option<T>를 Result<T, E>로 변환합니다. Option이 Some인 경우, 그 값을 Ok로 감싸 Result로 반환합니다. None인 경우, 클로저로 제공된 코드를 실행해 Err를 생성합니다.
 
+### if로 Some인 경우에만 처리하기
+```rs
+fn extract_vars(node: &ASTNode, vars: &mut HashSet<char>) {
+    match node {
+        ASTNode::Operand(c) => {
+            if c.is_alphabetic() {
+                vars.insert(*c);
+            }
+        }
+        ASTNode::Operator(_, left, right_opt) => {
+            extract_vars(left, vars);
+            if let Some(right) = right_opt {
+                extract_vars(right, vars);
+            }
+        }
+    }
+}
+```
 
 ### anyhow
 - anyhow는 Rust에서 오류 처리를 간단하게 해주는 라이브러리입니다. 주로 다루기 복잡한 오류를 단일 타입으로 표현하고 싶을 때 유용합니다.
