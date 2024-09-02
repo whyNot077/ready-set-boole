@@ -1,16 +1,16 @@
 use crate::ex03::ast::{ASTNode, get_ast, ast_to_postfix_string};
-use crate::ex05::negation_normal_form::to_nnf;
+use crate::ex05::negation_normal_form::nnf;
 
 // CNF로 변환하는 함수
-pub fn to_cnf(ast: &ASTNode) -> ASTNode {
+pub fn snf(ast: &ASTNode) -> ASTNode {
     match ast {
         // 기본적인 피연산자는 그대로 유지
         ASTNode::Operand(_) => ast.clone(),
 
         // 분배법칙 적용: `|`에 대해 분배법칙 적용
         ASTNode::Operator('|', left, right_opt) => {
-            let left_cnf = to_cnf(left);
-            let right_cnf = right_opt.as_ref().map(|r| to_cnf(r));
+            let left_cnf = snf(left);
+            let right_cnf = right_opt.as_ref().map(|r| snf(r));
 
             match (&left_cnf, &right_cnf) {
                 // A | (B & C) => (A | B) & (A | C)
@@ -28,13 +28,13 @@ pub fn to_cnf(ast: &ASTNode) -> ASTNode {
                 // Flatten nested OR chains
                 (ASTNode::Operator('|', ll, lr), _) => {
                     ASTNode::Operator('|',
-                        Box::new(to_cnf(ll)),
-                        Some(Box::new(to_cnf(&ASTNode::Operator('|', lr.clone().unwrap(), Some(Box::new(right_cnf.unwrap())))))))
+                        Box::new(snf(ll)),
+                        Some(Box::new(snf(&ASTNode::Operator('|', lr.clone().unwrap(), Some(Box::new(right_cnf.unwrap())))))))
                 }
                 (_, Some(ASTNode::Operator('|', rl, rr))) => {
                     ASTNode::Operator('|',
-                        Box::new(to_cnf(&ASTNode::Operator('|', Box::new(left_cnf.clone()), Some(rl.clone())))),
-                        Some(Box::new(to_cnf(rr.as_deref().unwrap()))))
+                        Box::new(snf(&ASTNode::Operator('|', Box::new(left_cnf.clone()), Some(rl.clone())))),
+                        Some(Box::new(snf(rr.as_deref().unwrap()))))
                 }
                 // 나머지 경우는 OR 연산자 그대로 유지
                 _ => ASTNode::Operator('|', Box::new(left_cnf), Some(Box::new(right_cnf.unwrap()))),
@@ -45,9 +45,9 @@ pub fn to_cnf(ast: &ASTNode) -> ASTNode {
         ASTNode::Operator('&', left, right_opt) => {
             // Flatten nested AND chains: (A & B) & C => A & B & C
             let mut flattened_ands = vec![];
-            flatten_and(&to_cnf(left), &mut flattened_ands);
+            flatten_and(&snf(left), &mut flattened_ands);
             if let Some(right_node) = right_opt {
-                flatten_and(&to_cnf(right_node), &mut flattened_ands);
+                flatten_and(&snf(right_node), &mut flattened_ands);
             }
 
             let mut current_ast = flattened_ands.pop().unwrap();
@@ -59,7 +59,7 @@ pub fn to_cnf(ast: &ASTNode) -> ASTNode {
 
         // 나머지 연산자에 대해 CNF를 적용하여 재귀적으로 변환
         ASTNode::Operator(op, left, right_opt) => {
-            ASTNode::Operator(*op, Box::new(to_cnf(left)), right_opt.as_ref().map(|r| Box::new(to_cnf(r))))
+            ASTNode::Operator(*op, Box::new(snf(left)), right_opt.as_ref().map(|r| Box::new(snf(r))))
         }
     }
 }
@@ -79,8 +79,8 @@ fn flatten_and(ast: &ASTNode, nodes: &mut Vec<ASTNode>) {
 /// 주어진 논리식을 CNF로 변환하는 함수
 pub fn conjunctive_normal_form(formula: &str) -> String {
     let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
-    let nnf_ast = to_nnf(&ast);  // NNF로 변환
-    let cnf_ast = to_cnf(&nnf_ast);  // CNF로 변환
+    let nnf_ast = nnf(&ast);  // NNF로 변환
+    let cnf_ast = snf(&nnf_ast);  // CNF로 변환
     ast_to_postfix_string(&cnf_ast)  // 결과를 후위 표기법 문자열로 반환
 }
 
