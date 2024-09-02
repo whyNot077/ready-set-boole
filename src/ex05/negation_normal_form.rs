@@ -143,11 +143,6 @@ mod tests {
         assert_eq!(negation_normal_form("AB>"), "A!B|");
     }
 
-    // #[test]
-    // fn negation_normal_form_with_equality() {
-    //     assert_eq!(negation_normal_form("AB="), "A!B|B!A|&");
-    // }
-
     #[test]
     fn negation_normal_form_with_complex() {
         assert_eq!(negation_normal_form("AB|C&!"), "A!B!&C!|");
