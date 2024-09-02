@@ -103,7 +103,7 @@ pub fn ast_to_infix_string(ast: &ASTNode) -> String {
 
             let left_str = match **left {
                 ASTNode::Operator(left_op, _, _) if operator_precedence(left_op) < current_precedence => {
-                    format!("({})", ast_to_infix_string(left))
+                    format!("{}", ast_to_infix_string(left))
                 }
                 _ => ast_to_infix_string(left),
             };
