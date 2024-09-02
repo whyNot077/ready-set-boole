@@ -1,16 +1,19 @@
 pub fn powerset(set: &[i32]) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = Vec::new();
-    let mut cardinal: u32 = 2;
-    cardinal = cardinal.pow(set.len() as u32);
-    for subset_elt in 0..cardinal {
+    let n = set.len();
+
+    // 2^n개의 부분집합을 생성
+    for i in 0..(1 << n) {
         let mut subset: Vec<i32> = Vec::new();
-        for elt in 0..set.len() {
-            if subset_elt & (1 << elt) > 0 {
-                subset.push(set[elt]);
+        for j in 0..n {
+            // i의 j번째 비트가 1인 경우, j번째 원소를 부분집합에 포함
+            if i & (1 << j) != 0 {
+                subset.push(set[j]);
             }
         }
         result.push(subset);
     }
+
     result
 }
 
