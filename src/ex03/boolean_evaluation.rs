@@ -7,7 +7,7 @@ pub fn eval_formula(formula: &str) -> bool {
 
 /// 수식을 평가하는 함수
 fn check_eval_formula(formula: &str) -> Result<bool> {
-    let ast = get_ast(formula).context("Failed to create AST from formula")?;
+    let ast = get_ast(formula).context("Failed to parse formula")?;
     Ok(evaluate_ast(&ast))
 }
 
@@ -51,16 +51,16 @@ pub fn calculate(op: char, left_val: bool, right_val: bool) -> bool {
 }
 
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn test_eval_formula() {
-//         assert_eq!(eval_formula("10&"), false);
-//         assert_eq!(eval_formula("10|"), true);
-//         assert_eq!(eval_formula("11>"), true);
-//         assert_eq!(eval_formula("10="), false);
-//         assert_eq!(eval_formula("1011||="), true);
-//     }
-// }
+    #[test]
+    fn test_eval_formula() {
+        assert_eq!(eval_formula("10&"), false);
+        assert_eq!(eval_formula("10|"), true);
+        assert_eq!(eval_formula("11>"), true);
+        assert_eq!(eval_formula("10="), false);
+        assert_eq!(eval_formula("1011||="), true);
+    }
+}
