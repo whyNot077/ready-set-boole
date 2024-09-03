@@ -4,25 +4,19 @@ use crate::ex06::conjunctive_normal_form::cnf;
 
 
 pub fn sat(formula: &str) -> bool {
-    // 1. AST 생성
     let ast = match get_ast(formula) {
         Ok(ast) => ast,
         Err(_) => return false, // AST 변환 실패 시 false 반환
     };
 
-    // 2. NNF로 변환
     let nnf_ast = nnf(&ast);
-
-    // 3. CNF로 변환
     let cnf_ast = cnf(&nnf_ast);
-
-    // 4. SAT 문제 해결 (단순히 CNF에 리터럴이 있는지 확인하는 기본 솔버)
     solve_cnf(&cnf_ast)
 }
 
 fn solve_cnf(ast: &ASTNode) -> bool {
     match ast {
-        ASTNode::Operand(_) => true, // 피연산자(변수)는 만족 가능성 있음
+        ASTNode::Operand(_) => true,
         ASTNode::Operator('&', left, Some(right)) => {
             // AND 연산자는 양쪽 모두 만족 가능해야 함
             solve_cnf(left) && solve_cnf(right)
