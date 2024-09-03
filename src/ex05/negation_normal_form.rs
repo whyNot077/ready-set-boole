@@ -32,11 +32,10 @@ fn apply_de_morgan(op: &ASTNode) -> ASTNode {
 }
 
 
-fn apply_implication(left: &ASTNode, right_opt: &Option<Box<ASTNode>>) -> ASTNode {
+fn apply_implication(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
     // 임플리케이션 변환: A > B => !A | B
-    let right = right_opt.as_ref().expect("Expected right operand for '>' operator");
     ASTNode::Operator('|',
-        Box::new(nnf(&ASTNode::Operator('!', Box::new(left.clone()), None))),
+        Box::new(nnf(&ASTNode::Operator('!', left.clone(), None))),
         Some(Box::new(nnf(right)))
     )
 }
@@ -61,14 +60,12 @@ fn apply_equivalence(left: &ASTNode, right_opt: &Option<Box<ASTNode>>) -> ASTNod
     ASTNode::Operator('|', Box::new(left_and_right), Some(Box::new(not_left_and_not_right)))
 }
 
-fn apply_xor(left: &ASTNode, right_opt: &Option<Box<ASTNode>>) -> ASTNode {
-    let right = right_opt.as_ref().expect("Expected right operand for '^' operator");
-    
+fn apply_xor(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {    
     // A ^ B => (A & !B) | (!A & B)
-    let not_a = ASTNode::Operator('!', Box::new(left.clone()), None);
+    let not_a = ASTNode::Operator('!', left.clone(), None);
     let not_b = ASTNode::Operator('!', right.clone(), None);
 
-    let left_and_not_b = ASTNode::Operator('&', Box::new(left.clone()), Some(Box::new(not_b)));
+    let left_and_not_b = ASTNode::Operator('&', left.clone(), Some(Box::new(not_b)));
     let not_a_and_right = ASTNode::Operator('&', Box::new(not_a), Some(right.clone()));
 
     ASTNode::Operator('|', Box::new(left_and_not_b), Some(Box::new(not_a_and_right)))
@@ -78,9 +75,9 @@ pub fn nnf(ast: &ASTNode) -> ASTNode {
     match ast {
         ASTNode::Operand(_) => ast.clone(),
         ASTNode::Operator('!', _, _) => apply_de_morgan(ast),
-        ASTNode::Operator('>', left, right_opt) => apply_implication(left, right_opt),
+        ASTNode::Operator('>', left, right_opt) => apply_implication(left, right_opt.as_ref().unwrap()),
         ASTNode::Operator('=', left, right_opt) => apply_equivalence(left, right_opt),
-        ASTNode::Operator('^', left, right_opt) => apply_xor(left, right_opt),
+        ASTNode::Operator('^', left, right) => apply_xor(left, right.as_ref().unwrap()),
         ASTNode::Operator(op, left, right_opt) => apply_operator(*op, left, right_opt),
     }
 }
