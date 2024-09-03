@@ -40,9 +40,10 @@ fn apply_implication(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
     )
 }
 
-fn apply_operator(op: char, left: &ASTNode, right_opt: &Option<Box<ASTNode>>) -> ASTNode {
-    ASTNode::Operator(op, Box::new(nnf(left)), right_opt.as_ref().map(|r| Box::new(nnf(r))))
+fn apply_operator(op: char, left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
+    ASTNode::Operator(op, Box::new(nnf(left)), Some(Box::new(nnf(right))))
 }
+
 
 fn apply_equivalence(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
     // (A & B)
@@ -76,7 +77,7 @@ pub fn nnf(ast: &ASTNode) -> ASTNode {
         ASTNode::Operator('>', left, right) => apply_implication(left, right.as_ref().unwrap()),
         ASTNode::Operator('=', left, right) => apply_equivalence(left, right.as_ref().unwrap()),
         ASTNode::Operator('^', left, right) => apply_xor(left, right.as_ref().unwrap()),
-        ASTNode::Operator(op, left, right_opt) => apply_operator(*op, left, right_opt),
+        ASTNode::Operator(op, left, right) => apply_operator(*op, left, right.as_ref().unwrap()),
     }
 }
 
