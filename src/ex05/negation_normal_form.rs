@@ -6,63 +6,58 @@ pub fn negation_normal_form(formula: &str) -> String {
     ast_to_postfix_string(&nnf_ast)  // 결과를 중위 표기법 문자열로 반환
 }
 
-fn apply_de_morgan(left: &Box<ASTNode>) -> ASTNode {
-    match left.as_ref() {
+fn apply_de_morgan(left: &ASTNode) -> ASTNode {
+    match left {
         ASTNode::Operator('!', inner_operand, _) => nnf(inner_operand), // !!A -> A
-        ASTNode::Operator('&', left_inner, right_opt) => {
+        ASTNode::Operator('&', left_inner, Some(right_inner)) => {
             // 드모르간 법칙: !(A & B) => !A | !B
-            let right = right_opt.as_ref().map(|r| &**r).unwrap();
             ASTNode::Operator('|',
                 Box::new(nnf(&ASTNode::Operator('!', left_inner.clone(), None))),
-                Some(Box::new(nnf(&ASTNode::Operator('!', Box::new(right.clone()), None)))))
+                Some(Box::new(nnf(&ASTNode::Operator('!', right_inner.clone(), None)))))
         }
-        ASTNode::Operator('|', left_inner, right_opt) => {
+        ASTNode::Operator('|', left_inner, Some(right_inner)) => {
             // 드모르간 법칙: !(A | B) => !A & !B
-            let right = right_opt.as_ref().map(|r| &**r).unwrap();
             ASTNode::Operator('&',
                 Box::new(nnf(&ASTNode::Operator('!', left_inner.clone(), None))),
-                Some(Box::new(nnf(&ASTNode::Operator('!', Box::new(right.clone()), None)))))
+                Some(Box::new(nnf(&ASTNode::Operator('!', right_inner.clone(), None)))))
         }
         _ => ASTNode::Operator('!', Box::new(nnf(left)), None),
     }
 }
 
-
-
-fn apply_implication(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
+fn apply_implication(left: &ASTNode, right: &ASTNode) -> ASTNode {
     // 임플리케이션 변환: A > B => !A | B
     ASTNode::Operator('|',
-        Box::new(nnf(&ASTNode::Operator('!', left.clone(), None))),
+        Box::new(nnf(&ASTNode::Operator('!', Box::new(left.clone()), None))),
         Some(Box::new(nnf(right)))
     )
 }
 
-fn apply_operator(op: char, left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
+fn apply_operator(op: char, left: &ASTNode, right: &ASTNode) -> ASTNode {
     ASTNode::Operator(op, Box::new(nnf(left)), Some(Box::new(nnf(right))))
 }
 
-
-fn apply_equivalence(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
+fn apply_equivalence(left: &ASTNode, right: &ASTNode) -> ASTNode {
     // (A & B)
-    let left_and_right = ASTNode::Operator('&', left.clone(), Some(right.clone()));
+    let left_and_right = ASTNode::Operator('&', Box::new(left.clone()), Some(Box::new(right.clone())));
 
     // (!A & !B)
     let not_left_and_not_right = ASTNode::Operator('&',
-        Box::new(ASTNode::Operator('!', left.clone(), None)),
-        Some(Box::new(ASTNode::Operator('!', right.clone(), None)))
+        Box::new(ASTNode::Operator('!', Box::new(left.clone()), None)),
+        Some(Box::new(ASTNode::Operator('!', Box::new(right.clone()), None)))
     );
 
     // (A & B) | (!A & !B)
     ASTNode::Operator('|', Box::new(left_and_right), Some(Box::new(not_left_and_not_right)))
 }
 
-fn apply_xor(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {    
+fn apply_xor(left: &ASTNode, right: &ASTNode) -> ASTNode {    
     // A ^ B => (A & !B) | (!A & B)
-    let not_a = ASTNode::Operator('!', left.clone(), None);
-    let not_b = ASTNode::Operator('!', right.clone(), None);
+    let not_a = ASTNode::Operator('!', Box::new(left.clone()), None);
+    let not_b = ASTNode::Operator('!', Box::new(right.clone()), None);
 
-    let left_and_not_b = ASTNode::Operator('&', left.clone(), Some(Box::new(not_b)));
-    let not_a_and_right = ASTNode::Operator('&', Box::new(not_a), Some(right.clone()));
+    let left_and_not_b = ASTNode::Operator('&', Box::new(left.clone()), Some(Box::new(not_b)));
+    let not_a_and_right = ASTNode::Operator('&', Box::new(not_a), Some(Box::new(right.clone())));
 
     ASTNode::Operator('|', Box::new(left_and_not_b), Some(Box::new(not_a_and_right)))
 }
@@ -71,10 +66,11 @@ pub fn nnf(ast: &ASTNode) -> ASTNode {
     match ast {
         ASTNode::Operand(_) => ast.clone(),
         ASTNode::Operator('!', left, _) => apply_de_morgan(left),
-        ASTNode::Operator('>', left, right) => apply_implication(left, right.as_ref().unwrap()),
-        ASTNode::Operator('=', left, right) => apply_equivalence(left, right.as_ref().unwrap()),
-        ASTNode::Operator('^', left, right) => apply_xor(left, right.as_ref().unwrap()),
-        ASTNode::Operator(op, left, right) => apply_operator(*op, left, right.as_ref().unwrap()),
+        ASTNode::Operator('>', left, Some(right)) => apply_implication(left, right),
+        ASTNode::Operator('=', left, Some(right)) => apply_equivalence(left, right),
+        ASTNode::Operator('^', left, Some(right)) => apply_xor(left, right),
+        ASTNode::Operator(op, left, Some(right)) => apply_operator(*op, left, right),
+        _ => ast.clone(), // This case handles malformed ASTs where an operator has no right operand
     }
 }
 
