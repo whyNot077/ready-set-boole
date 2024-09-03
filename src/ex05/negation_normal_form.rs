@@ -44,15 +44,13 @@ fn apply_operator(op: char, left: &ASTNode, right_opt: &Option<Box<ASTNode>>) ->
     ASTNode::Operator(op, Box::new(nnf(left)), right_opt.as_ref().map(|r| Box::new(nnf(r))))
 }
 
-fn apply_equivalence(left: &ASTNode, right_opt: &Option<Box<ASTNode>>) -> ASTNode {
-    let right = right_opt.as_ref().expect("Expected right operand for '=' operator");
-
+fn apply_equivalence(left: &Box<ASTNode>, right: &Box<ASTNode>) -> ASTNode {
     // (A & B)
-    let left_and_right = ASTNode::Operator('&', Box::new(left.clone()), Some(right.clone()));
+    let left_and_right = ASTNode::Operator('&', left.clone(), Some(right.clone()));
 
     // (!A & !B)
     let not_left_and_not_right = ASTNode::Operator('&',
-        Box::new(ASTNode::Operator('!', Box::new(left.clone()), None)),
+        Box::new(ASTNode::Operator('!', left.clone(), None)),
         Some(Box::new(ASTNode::Operator('!', right.clone(), None)))
     );
 
@@ -75,8 +73,8 @@ pub fn nnf(ast: &ASTNode) -> ASTNode {
     match ast {
         ASTNode::Operand(_) => ast.clone(),
         ASTNode::Operator('!', _, _) => apply_de_morgan(ast),
-        ASTNode::Operator('>', left, right_opt) => apply_implication(left, right_opt.as_ref().unwrap()),
-        ASTNode::Operator('=', left, right_opt) => apply_equivalence(left, right_opt),
+        ASTNode::Operator('>', left, right) => apply_implication(left, right.as_ref().unwrap()),
+        ASTNode::Operator('=', left, right) => apply_equivalence(left, right.as_ref().unwrap()),
         ASTNode::Operator('^', left, right) => apply_xor(left, right.as_ref().unwrap()),
         ASTNode::Operator(op, left, right_opt) => apply_operator(*op, left, right_opt),
     }
