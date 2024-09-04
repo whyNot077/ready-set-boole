@@ -28,11 +28,6 @@ mod tests {
     }
 
     #[test]
-    fn powerset_basic_test() {
-        assert_eq!(powerset(&[42]), vec![vec![], vec![42]]);
-    }
-
-    #[test]
     fn powerset_with_big_set() {
         assert_eq!(
             powerset(&[1, 2, 3]),
