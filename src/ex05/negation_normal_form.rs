@@ -92,6 +92,21 @@ mod tests {
         assert_eq!(negation_normal_form("AB>"), "A!B|"); // A > B -> !A | B
         assert_eq!(negation_normal_form("A!!!"), "A!"); // !!!A -> !A
 
+        // 추가 테스트 케이스
+        assert_eq!(negation_normal_form("A"), "A");         // A는 그대로
+        assert_eq!(negation_normal_form("A!"), "A!");       // A!는 그대로
+        assert_eq!(negation_normal_form("AB&!"), "A!B!|");  // !(A & B) -> !A | !B
+        assert_eq!(negation_normal_form("AB|!"), "A!B!&");  // !(A | B) -> !A & !B
+        assert_eq!(negation_normal_form("AB>!"), "A&B!");   // !(A -> B) -> A & !B
+        assert_eq!(negation_normal_form("AB=!"), "A!B|A!B!|&"); // !(A = B) -> (!A | B) & (A | !B)
+        assert_eq!(negation_normal_form("ABC||"), "A|(B|C)"); // A | (B | C)는 그대로
+        assert_eq!(negation_normal_form("ABC||!"), "A!B!&C!&"); // !(A | (B | C)) -> !A & !B & !C
+        assert_eq!(negation_normal_form("ABC|&"), "A&(B|C)");  // A & (B | C)는 그대로
+        assert_eq!(negation_normal_form("ABC&|"), "A|(B&C)");  // A | (B & C)는 그대로
+        assert_eq!(negation_normal_form("ABC&|!"), "A!B!|C!|"); // !(A | (B & C)) -> !A | !B | !C
+        assert_eq!(negation_normal_form("ABC^^"), "A^(B^C)");  // XOR 연산은 그대로
+        assert_eq!(negation_normal_form("ABC>>"), "A>>(B>>C)"); // 조건부 연산은 그대로
+
         // 추가적인 테스트 케이스
         // 이중 부정
         assert_eq!(negation_normal_form("A!!"), "A"); // !!A -> A

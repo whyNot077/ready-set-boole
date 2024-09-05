@@ -63,4 +63,35 @@ mod tests {
         assert_eq!(eval_formula("10="), false);
         assert_eq!(eval_formula("1011||="), true);
     }
+
+    #[test]
+    fn eval_boolean() {
+        assert_eq!(eval_formula("0!"), true);
+        assert_eq!(eval_formula("1!"), false);
+        assert_eq!(eval_formula("00|"), false);
+        assert_eq!(eval_formula("10|"), true);
+        assert_eq!(eval_formula("01|"), true);
+        assert_eq!(eval_formula("11|"), true);
+        assert_eq!(eval_formula("10&"), false);
+        assert_eq!(eval_formula("11&"), true);
+        assert_eq!(eval_formula("11^"), false);
+        assert_eq!(eval_formula("10^"), true);
+        assert_eq!(eval_formula("00>"), true);
+        assert_eq!(eval_formula("01>"), true);
+        assert_eq!(eval_formula("10>"), false);
+        assert_eq!(eval_formula("11>"), true);
+        assert_eq!(eval_formula("00="), true);
+        assert_eq!(eval_formula("11="), true);
+        assert_eq!(eval_formula("10="), false);
+        assert_eq!(eval_formula("01="), false);
+
+            // 새로 추가된 테스트 케이스
+        assert_eq!(eval_formula("11&0|"), true);
+        assert_eq!(eval_formula("10&1|"), true);
+        assert_eq!(eval_formula("11&1|"), true);
+        assert_eq!(eval_formula("11&1|1^"), false);
+        assert_eq!(eval_formula("01&1|1="), true);
+        assert_eq!(eval_formula("01&1&1&"), false);
+        assert_eq!(eval_formula("0111&&&"), false);
+    }    
 }

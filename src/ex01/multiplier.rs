@@ -27,4 +27,13 @@ mod test {
             std::u32::MAX.wrapping_mul(std::u32::MAX)
         );
     }
+    #[test]
+    fn eval_multiplier() {
+        assert_eq!(multiplier(0, 0), 0);
+        assert_eq!(multiplier(1, 0), 0);
+        assert_eq!(multiplier(0, 1), 0);
+        assert_eq!(multiplier(1, 1), 1);
+        assert_eq!(multiplier(1, 2), 2);
+        assert_eq!(multiplier(2, 2), 4);
+    }
 }

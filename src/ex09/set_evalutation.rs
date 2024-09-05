@@ -72,38 +72,100 @@ pub fn eval_set(formula: &str, sets: &Vec<Vec<i32>>) -> Vec<i32> {
 }
 
 #[cfg(test)]
-
 mod tests {
     use super::*;
 
     #[test]
     fn eval_set_tests() {
-        let sets = vec![vec![0, 1, 2], vec![0, 3, 4]];
+        // 'A' with '[[]]' -> '[]'
+        let sets = vec![vec![]];
+        assert_eq!(eval_set("A", &sets), vec![]);
 
-        assert_eq!(eval_set("AB&", &sets), [0]);
+        // 'A!' with '[[]]' -> '[]'
+        assert_eq!(eval_set("A!", &sets), vec![]);
 
-        let sets = vec![vec![0, 1, 2], vec![3, 4, 5]];
+        // 'A' with '[[42]]' -> '[42]'
+        let sets = vec![vec![42]];
+        assert_eq!(eval_set("A", &sets), vec![42]);
 
-        let mut result: Vec<i32> = eval_set("AB|", &sets);
-        result.sort();
-        assert_eq!(result, vec![0, 1, 2, 3, 4, 5]);
+        // 'A!' with '[[42]]' -> '[]'
+        assert_eq!(eval_set("A!", &sets), vec![]);
 
-        let sets = vec![vec![0, 1, 2]];
+        // 'A!B&' with '[[1, 2, 3], [2, 3, 4]]' -> '[4]'
+        let sets = vec![vec![1, 2, 3], vec![2, 3, 4]];
+        assert_eq!(eval_set("A!B&", &sets), vec![4]);
 
-        assert_eq!(eval_set("A!", &sets), []);
+        // 'AB|' with '[[0, 1, 2], []]' -> '[0, 1, 2]'
+        let sets = vec![vec![0, 1, 2], vec![]];
+        assert_eq!(eval_set("AB|", &sets), vec![0, 1, 2]);
+
+        // 'AB&' with '[[0, 1, 2], []]' -> '[]'
+        assert_eq!(eval_set("AB&", &sets), vec![]);
+
+        // 'AB&' with '[[0, 1, 2], [0]]' -> '[0]'
+        let sets = vec![vec![0, 1, 2], vec![0]];
+        assert_eq!(eval_set("AB&", &sets), vec![0]);
+
+        // 'AB&' with '[[0, 1, 2], [42]]' -> '[]'
+        let sets = vec![vec![0, 1, 2], vec![42]];
+        assert_eq!(eval_set("AB&", &sets), vec![]);
+
+        // 'AB^' with '[[0, 1, 2], [0]]' -> '[1, 2]'
+        let sets = vec![vec![0, 1, 2], vec![0]];
+        assert_eq!(eval_set("AB^", &sets), vec![1, 2]);
+
+        // 'AB>' with '[[0], [1, 2]]' -> '[1, 2]'
+        let sets = vec![vec![0], vec![1, 2]];
+        assert_eq!(eval_set("AB>", &sets), vec![1, 2]);
+
+        // 'AB>' with '[[0], [0, 1, 2]]' -> '[0, 1, 2]'
+        let sets = vec![vec![0], vec![0, 1, 2]];
+        assert_eq!(eval_set("AB>", &sets), vec![0, 1, 2]);
+
+        // 'ABC||' with '[[], [], []]' -> '[]'
+        let sets = vec![vec![], vec![], vec![]];
+        assert_eq!(eval_set("ABC||", &sets), vec![]);
+
+        // 'ABC||' with '[[0], [1], [2]]' -> '[0, 1, 2]'
+        let sets = vec![vec![0], vec![1], vec![2]];
+        assert_eq!(eval_set("ABC||", &sets), vec![0, 1, 2]);
+
+        // 'ABC||' with '[[0], [0], [0]]' -> '[0]'
+        let sets = vec![vec![0], vec![0], vec![0]];
+        assert_eq!(eval_set("ABC||", &sets), vec![0]);
+
+        // 'ABC&&' with '[[0], [0], []]' -> '[]'
+        let sets = vec![vec![0], vec![0], vec![]];
+        assert_eq!(eval_set("ABC&&", &sets), vec![]);
+
+        // 'ABC&&' with '[[0], [0], [0]]' -> '[0]'
+        let sets = vec![vec![0], vec![0], vec![0]];
+        assert_eq!(eval_set("ABC&&", &sets), vec![0]);
+
+        // 'ABC^^' with '[[0], [0], [0]]' -> '[0]'
+        assert_eq!(eval_set("ABC^^", &sets), vec![0]);
+
+        // 'ABC>>' with '[[0], [0], [0]]' -> '[0]'
+        assert_eq!(eval_set("ABC>>", &sets), vec![0]);
     }
 
     #[test]
     fn eval_set_stress_test() {
+        // 'ABC||' with '[[0], [0], [0]]' -> '[0]'
         let sets = vec![vec![0], vec![0], vec![0]];
+        assert_eq!(eval_set("ABC||", &sets), vec![0]);
 
-        assert_eq!(eval_set("ABC||", &sets), [0]);
-        assert_eq!(eval_set("ABC&&", &sets), [0]);
-        assert_eq!(eval_set("ABC^^", &sets), [0]);
-        assert_eq!(eval_set("ABC>>", &sets), [0]);
+        // 'ABC&&' with '[[0], [0], [0]]' -> '[0]'
+        assert_eq!(eval_set("ABC&&", &sets), vec![0]);
 
+        // 'ABC^^' with '[[0], [0], [0]]' -> '[0]'
+        assert_eq!(eval_set("ABC^^", &sets), vec![0]);
+
+        // 'ABC>>' with '[[0], [0], [0]]' -> '[0]'
+        assert_eq!(eval_set("ABC>>", &sets), vec![0]);
+
+        // 'ABC&&' with '[[0], [0], []]' -> '[]'
         let sets = vec![vec![0], vec![0], vec![]];
-
-        assert_eq!(eval_set("ABC&&", &sets), []);
+        assert_eq!(eval_set("ABC&&", &sets), vec![]);
     }
 }

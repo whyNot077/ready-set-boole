@@ -34,25 +34,30 @@ fn solve_cnf(ast: &ASTNode) -> bool {
 }
 
 #[cfg(test)]
-
 mod tests {
-    use std::assert_eq;
-
     use super::*;
 
     #[test]
-    fn sat_with_or() {
-        assert_eq!(sat("AB|"), true);
-    }
+    fn test_sat() {
+        // 주어진 논리식에 대한 테스트 케이스
+        assert_eq!(sat("A"), true);                 // A는 참
+        assert_eq!(sat("A!"), true);                // A!는 참
+        assert_eq!(sat("AA|"), true);               // A | A는 참
+        assert_eq!(sat("AA&"), true);               // A & A는 참
+        assert_eq!(sat("AA!&"), false);             // A & !A는 거짓
+        assert_eq!(sat("AA^"), false);              // A ^ A는 거짓 (동일한 값의 XOR은 0)
+        assert_eq!(sat("AB^"), true);               // A ^ B는 참 (A와 B가 다를 경우)
+        assert_eq!(sat("AB="), true);               // A = B는 참 (A와 B가 같을 경우)
+        assert_eq!(sat("AA>"), true);               // A -> A는 참 (자명한 진리)
+        assert_eq!(sat("AA!>"), true);              // !A -> A는 참 (자명한 진리)
+        assert_eq!(sat("ABC||"), true);             // A | B | C는 참 (하나라도 참일 경우)
+        assert_eq!(sat("AB&A!B!&&"), false);        // (A & B) & (!A & !B)는 거짓 (모순)
+        assert_eq!(sat("ABCDE&&&&"), true);         // A & B & C & D & E는 참 (모두 참일 경우)
+        assert_eq!(sat("AAA^^"), true);             // A ^ A ^ A는 참 (세 개 XOR)
+        assert_eq!(sat("ABCDE^^^^"), true);         // A ^ B ^ C ^ D ^ E는 참 (홀수 개의 참은 XOR 결과가 참)
 
-    #[test]
-    fn sat_with_and() {
-        assert_eq!(sat("AB&"), true);
-    }
-
-    #[test]
-    fn test_with_double_letter() {
-        assert_eq!(sat("AA!&"), false);
-        assert_eq!(sat("AA^"), false);
+        // 추가 테스트 케이스
+        assert_eq!(sat("AB|"), true);               // A | B는 참 (하나라도 참일 경우)
     }
 }
+

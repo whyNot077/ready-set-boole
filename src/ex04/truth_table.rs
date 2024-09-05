@@ -114,18 +114,96 @@ pub fn print_truth_table(formula: &str) {
 
 
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[test]
+fn test_truth_table() {
+    // 기존 테스트 케이스
 
-    #[test]
-    fn test_truth_table() {
-        let res = generate_truth_table("AB&C|").unwrap();
-        assert_eq!(res, "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 0 |\n| 0 | 1 | 1 | 1 |\n| 1 | 0 | 0 | 0 |\n| 1 | 0 | 1 | 1 |\n| 1 | 1 | 0 | 1 |\n| 1 | 1 | 1 | 1 |\n");
+    // AB&C| 테스트 케이스
+    let res = generate_truth_table("AB&C|").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 0 |\n| 0 | 1 | 1 | 1 |\n| 1 | 0 | 0 | 0 |\n| 1 | 0 | 1 | 1 |\n| 1 | 1 | 0 | 1 |\n| 1 | 1 | 1 | 1 |\n"
+    );
 
-        assert!(generate_truth_table("AB&C|&").is_err());
+    // 잘못된 입력 처리
+    assert!(generate_truth_table("AB&C|&").is_err());
 
-        let res = generate_truth_table("A!").unwrap();
-        assert_eq!(res, "| A | = |\n|---|---|\n| 0 | 1 |\n| 1 | 0 |\n");
-    }
+    // A! 테스트 케이스
+    let res = generate_truth_table("A!").unwrap();
+    assert_eq!(
+        res,
+        "| A | = |\n|---|---|\n| 0 | 1 |\n| 1 | 0 |\n"
+    );
+
+    // A 테스트 케이스
+    let res = generate_truth_table("A").unwrap();
+    assert_eq!(
+        res,
+        "| A | = |\n|---|---|\n| 0 | 0 |\n| 1 | 1 |\n"
+    );
+
+    // AB| 테스트 케이스
+    let res = generate_truth_table("AB|").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | = |\n|---|---|---|\n| 0 | 0 | 0 |\n| 0 | 1 | 1 |\n| 1 | 0 | 1 |\n| 1 | 1 | 1 |\n"
+    );
+
+    // AB& 테스트 케이스
+    let res = generate_truth_table("AB&").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | = |\n|---|---|---|\n| 0 | 0 | 0 |\n| 0 | 1 | 0 |\n| 1 | 0 | 0 |\n| 1 | 1 | 1 |\n"
+    );
+
+    // AB^ 테스트 케이스
+    let res = generate_truth_table("AB^").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | = |\n|---|---|---|\n| 0 | 0 | 0 |\n| 0 | 1 | 1 |\n| 1 | 0 | 1 |\n| 1 | 1 | 0 |\n"
+    );
+
+    // AB> 테스트 케이스
+    let res = generate_truth_table("AB>").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | = |\n|---|---|---|\n| 0 | 0 | 1 |\n| 0 | 1 | 1 |\n| 1 | 0 | 0 |\n| 1 | 1 | 1 |\n"
+    );
+
+    // AB= 테스트 케이스
+    let res = generate_truth_table("AB=").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | = |\n|---|---|---|\n| 0 | 0 | 1 |\n| 0 | 1 | 0 |\n| 1 | 0 | 0 |\n| 1 | 1 | 1 |\n"
+    );
+
+    // AA= 테스트 케이스
+    let res = generate_truth_table("AA=").unwrap();
+    assert_eq!(
+        res,
+        "| A | = |\n|---|---|\n| 0 | 1 |\n| 1 | 1 |\n"
+    );
+
+    // 추가된 새로운 테스트 케이스
+
+    // ABC== 테스트 케이스
+    let res = generate_truth_table("ABC==").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 1 |\n| 0 | 1 | 1 | 0 |\n| 1 | 0 | 0 | 1 |\n| 1 | 0 | 1 | 0 |\n| 1 | 1 | 0 | 0 |\n| 1 | 1 | 1 | 1 |\n"
+    );
+
+    // AB>C> 테스트 케이스
+    let res = generate_truth_table("AB>C>").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | C | = |\n|---|---|---|---|\n| 0 | 0 | 0 | 0 |\n| 0 | 0 | 1 | 1 |\n| 0 | 1 | 0 | 0 |\n| 0 | 1 | 1 | 1 |\n| 1 | 0 | 0 | 1 |\n| 1 | 0 | 1 | 1 |\n| 1 | 1 | 0 | 0 |\n| 1 | 1 | 1 | 1 |\n"
+    );
+
+    // AB>A>A> 테스트 케이스
+    let res = generate_truth_table("AB>A>A>").unwrap();
+    assert_eq!(
+        res,
+        "| A | B | = |\n|---|---|---|\n| 0 | 0 | 1 |\n| 0 | 1 | 1 |\n| 1 | 0 | 1 |\n| 1 | 1 | 1 |\n"
+    );
 }

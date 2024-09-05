@@ -24,4 +24,15 @@ mod test {
             std::u32::MAX.wrapping_add(std::u32::MAX)
         );
     }
+
+
+    #[test]
+    fn eval_adder() {
+        assert_eq!(adder(0, 0), 0);
+        assert_eq!(adder(1, 0), 1);
+        assert_eq!(adder(0, 1), 1);
+        assert_eq!(adder(1, 1), 2);
+        assert_eq!(adder(1, 2), 3);
+        assert_eq!(adder(2, 2), 4);
+    }
 }

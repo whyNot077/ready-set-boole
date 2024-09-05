@@ -18,28 +18,35 @@ pub fn powerset(set: &[i32]) -> Vec<Vec<i32>> {
 }
 
 #[cfg(test)]
-
 mod tests {
     use super::*;
 
     #[test]
-    fn powerset_with_empty_sets() {
-        assert_eq!(powerset(&[]), [[]]);
-    }
+    fn test_powerset() {
+        // '[]' gives '[[]]' (1 subset)
+        assert_eq!(powerset(&[]), vec![vec![]]);
 
-    #[test]
-    fn powerset_with_big_set() {
+        // '[0]' gives '[[], [0]]' (2 subset)
+        assert_eq!(powerset(&[0]), vec![vec![], vec![0]]);
+
+        // '[0, 1]' gives '[[], [0], [1], [0, 1]]' (4 subset)
         assert_eq!(
-            powerset(&[1, 2, 3]),
+            powerset(&[0, 1]),
+            vec![vec![], vec![0], vec![1], vec![0, 1]]
+        );
+
+        // '[0, 1, 2]' gives '[[], [0], [1], [2], [0, 1], [1, 2], [0, 2], [0, 1, 2]]' (8 subset)
+        assert_eq!(
+            powerset(&[0, 1, 2]),
             vec![
                 vec![],
+                vec![0],
                 vec![1],
                 vec![2],
+                vec![0, 1],
                 vec![1, 2],
-                vec![3],
-                vec![1, 3],
-                vec![2, 3],
-                vec![1, 2, 3]
+                vec![0, 2],
+                vec![0, 1, 2]
             ]
         );
     }

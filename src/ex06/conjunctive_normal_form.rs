@@ -95,12 +95,24 @@ mod tests {
 
     #[test]
     fn test_cnf_conversion() {
-        assert_eq!(conjunctive_normal_form("AB&!"), "A!B!|");
-        assert_eq!(conjunctive_normal_form("AB|!"), "A!B!&");
-        assert_eq!(conjunctive_normal_form("AB|C&"), "AB|C&");
-        assert_eq!(conjunctive_normal_form("AB|C|D|"), "ABCD|||");
-        assert_eq!(conjunctive_normal_form("AB&C&D&"), "ABCD&&&");
-        assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");
-        assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");
+        // 기본적인 CNF 변환
+        assert_eq!(conjunctive_normal_form("A"), "A");               // 단일 변수는 그대로 유지
+        assert_eq!(conjunctive_normal_form("A!"), "A!");             // 부정된 단일 변수는 그대로 유지
+        assert_eq!(conjunctive_normal_form("AB&!"), "A!B!|");        // !(A & B) -> !A | !B (De Morgan's Law)
+        assert_eq!(conjunctive_normal_form("AB|!"), "A!B!&");        // !(A | B) -> !A & !B (De Morgan's Law)
+        assert_eq!(conjunctive_normal_form("AB|C&"), "AB|C&");       // A | (B & C)는 이미 CNF 형태
+        assert_eq!(conjunctive_normal_form("AB|C|D|"), "ABCD|||");   // A | B | C | D도 그대로 유지
+        assert_eq!(conjunctive_normal_form("AB&C&D&"), "ABCD&&&");   // A & B & C & D도 CNF 형태
+        assert_eq!(conjunctive_normal_form("AB&!C!|"), "A!B!C!||");  // 부정 포함 복합식 변환
+        assert_eq!(conjunctive_normal_form("AB|!C!&"), "A!B!C!&&");  // 또 다른 복합식 변환
+
+        // 추가된 CNF 변환 테스트
+        assert_eq!(conjunctive_normal_form("ABC||"), "ABC||");       // 세 항 논리합은 그대로 유지
+        assert_eq!(conjunctive_normal_form("ABC||!"), "A!B!C!&&");   // !(A | B | C) -> !A & !B & !C
+        assert_eq!(conjunctive_normal_form("ABC|&"), "A&(B|C)");     // CNF 변환 결과 그대로
+        assert_eq!(conjunctive_normal_form("ABC&|"), "A|(B&C)");     // CNF 변환 결과 그대로
+        assert_eq!(conjunctive_normal_form("ABC&|!"), "A!B!|C!|");   // !(A | (B & C)) -> !A | !B | !C
+        assert_eq!(conjunctive_normal_form("ABC^^"), "A^(B^C)");     // XOR은 그대로 유지
+        assert_eq!(conjunctive_normal_form("ABC>>"), "A>>(B>>C)");   // 조건부 연산은 그대로 유지
     }
 }
