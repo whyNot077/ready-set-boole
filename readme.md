@@ -7,6 +7,12 @@ git config --global core.autocrlf true
 ### Unix/Linux/macOS에서:
 git config --global core.autocrlf input
 
+# 러스트 슬라이스
+- left..right: 포함하지 않는 우측 범위 (exclusive range) left부터 right - 1까지
+- left..=right: 포함하는 우측 범위 (inclusive range) left부터 right까지
+- ..right: 시작 값을 생략한 범위 0부터 right - 1까지
+- left..: 끝 값을 생략한 범위 left부터 배열이나 슬라이스의 끝까지
+
 # rust 모듈화하기
 ### mod.rs 파일
 동일한 폴더 내의 폴더 또는 파일 이름을 mod.rs 파일에 넣는다.
