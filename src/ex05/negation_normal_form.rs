@@ -7,27 +7,39 @@ pub fn negation_normal_form(formula: &str) -> String {
     println!("AST after NNF: {}", ast_to_postfix_string(&nnf_ast));
     ast_to_postfix_string(&nnf_ast)
 }
-
 fn apply_de_morgan(left: &ASTNode) -> ASTNode {
     match left {
-        // Negating a negation: !!A -> A
+        // Double negation: !!A -> A
         ASTNode::Operator('!', inner, _) => nnf(inner),
         
-        // Negating a conjunction: !(A & B) -> !A | !B
+        // Negation of conjunction: !(A & B) -> !A | !B
         ASTNode::Operator('&', left_inner, Some(right_inner)) => {
             ASTNode::Operator('|',
                 Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None))),
                 Some(Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None)))))
         }
         
-        // Negating a disjunction: !(A | B) -> !A & !B
+        // Negation of disjunction: !(A | B) -> !A & !B
         ASTNode::Operator('|', left_inner, Some(right_inner)) => {
             ASTNode::Operator('&',
                 Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None))),
                 Some(Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None)))))
         }
 
-        // Negation of a simple operand
+        // This case handles complex structures like !(A | (B & C)) properly
+        ASTNode::Operator(op, left_inner, Some(right_inner)) => {
+            // Apply De Morgan's law recursively
+            let neg_left = ASTNode::Operator('!', Box::new(nnf(left_inner)), None);
+            let neg_right = ASTNode::Operator('!', Box::new(nnf(right_inner)), None);
+            
+            match op {
+                '&' => ASTNode::Operator('|', Box::new(neg_left), Some(Box::new(neg_right))),
+                '|' => ASTNode::Operator('&', Box::new(neg_left), Some(Box::new(neg_right))),
+                _ => ASTNode::Operator('!', Box::new(nnf(left)), None),
+            }
+        }
+
+        // Negation of a single operand
         _ => ASTNode::Operator('!', Box::new(nnf(left)), None),
     }
 }
