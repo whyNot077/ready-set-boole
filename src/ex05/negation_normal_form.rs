@@ -12,45 +12,45 @@ fn apply_de_morgan(left: &ASTNode) -> ASTNode {
     match left {
         // Negating a negation: !!A -> A
         ASTNode::Operator('!', inner, _) => nnf(inner),
-        
+
         // Negating a conjunction: !(A & B) -> !A | !B
         ASTNode::Operator('&', left_inner, Some(right_inner)) => {
-            ASTNode::Operator('|',
-                Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None))),
-                Some(Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None)))))
-        }
-        
-        // Negating a disjunction: !(A | B) -> !A & !B
-        ASTNode::Operator('|', left_inner, Some(right_inner)) => {
-            ASTNode::Operator('&',
-                Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None))),
-                Some(Box::new(nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None)))))
+            let neg_left = nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None));
+            let neg_right = nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None));
+            ASTNode::Operator('|', Box::new(neg_left), Some(Box::new(neg_right)))
         }
 
-        // Negation of a simple operand
+        // Negating a disjunction: !(A | B) -> !A & !B
+        ASTNode::Operator('|', left_inner, Some(right_inner)) => {
+            let neg_left = nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None));
+            let neg_right = nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None));
+            ASTNode::Operator('&', Box::new(neg_left), Some(Box::new(neg_right)))
+        }
+
+        // Negation of a simple operand or an unsupported case
         _ => ASTNode::Operator('!', Box::new(nnf(left)), None),
     }
 }
 
-fn apply_operator(op: char, left: &ASTNode, right: &ASTNode) -> ASTNode {
-    ASTNode::Operator(op, Box::new(nnf(left)), Some(Box::new(nnf(right))))
-}
-
 pub fn nnf(ast: &ASTNode) -> ASTNode {
     match ast {
-        // Operand remains unchanged
+        // Operands are returned as-is
         ASTNode::Operand(_) => ast.clone(),
-        
-        // Negation is handled by De Morgan's laws
+
+        // Negation is handled via apply_de_morgan
         ASTNode::Operator('!', left, _) => apply_de_morgan(left),
-        
-        // For other binary operators, recursively apply NNF to left and right operands
-        ASTNode::Operator(op, left, Some(right)) => apply_operator(*op, left, right),
-        
+
+        // For other operators, we apply NNF recursively to both operands
+        ASTNode::Operator(op, left, Some(right)) => {
+            let left_nnf = nnf(left);
+            let right_nnf = nnf(right);
+            ASTNode::Operator(*op, Box::new(left_nnf), Some(Box::new(right_nnf)))
+        }
+
+        // Malformed AST or unsupported cases
         _ => ast.clone(),
     }
 }
-
 
 #[cfg(test)]
 mod tests {
