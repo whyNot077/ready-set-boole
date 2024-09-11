@@ -2,9 +2,7 @@ use crate::ex03::ast::{ASTNode, get_ast, ast_to_postfix_string};
 
 pub fn negation_normal_form(formula: &str) -> String {
     let ast = get_ast(formula).expect("Failed to parse formula");
-    println!("AST before NNF: {}", ast_to_postfix_string(&ast));
     let nnf_ast = nnf(&ast);
-    println!("AST after NNF: {}", ast_to_postfix_string(&nnf_ast));
     ast_to_postfix_string(&nnf_ast)
 }
 
@@ -81,9 +79,7 @@ mod tests {
         assert_eq!(negation_normal_form("ABC||!"), "A!B!C!&&");  // !(A | (B | C)) -> !A & !B & !C
         assert_eq!(negation_normal_form("ABC|&"), "ABC|&");  // A & (B | C)
         assert_eq!(negation_normal_form("ABC&|"), "ABC&|");  // A | (B & C)
-        assert_eq!(negation_normal_form("ABC&|!"), "A!B!C!||");  // !(A | (B & C)) -> !A | !B | !C
-        assert_eq!(negation_normal_form("ABC^^"), "ABC^^");  // A ^ (B ^ C)
-        assert_eq!(negation_normal_form("ABC>>"), "ABC>>");  // A > (B > C)
+        assert_eq!(negation_normal_form("ABC&|!"), "A!B!C!|&");  // !(A | (B & C)) -> !A | !B | !C
         
         // 추가적인 테스트 케이스
         // 이중 부정
@@ -93,9 +89,9 @@ mod tests {
 
         // XOR 연산자 변환
         assert_eq!(negation_normal_form("AB^"), "AB!&A!B&|"); // A ^ B -> (A & !B) | (!A & B)
-        assert_eq!(negation_normal_form("A!B^"), "A!B!&A!!B&|"); // !A ^ B -> (!A & !B) | (A & B)
-        assert_eq!(negation_normal_form("AB!^"), "AB!!&A!B!&|"); // A ^ !B -> (A & B) | (!A & !B)
-        assert_eq!(negation_normal_form("A!B!^"), "A!B!!&A!!B!&|"); // !A ^ !B -> (!A & B) | (A & !B)
+        assert_eq!(negation_normal_form("A!B^"), "A!B!&AB&|"); // !A ^ B -> (!A & !B) | (A & B)
+        assert_eq!(negation_normal_form("AB!^"), "AB&A!B!&|"); // A ^ !B -> (A & B) | (!A & !B)
+        assert_eq!(negation_normal_form("A!B!^"), "A!B&AB!&|"); // !A ^ !B -> (!A & B) | (A & !B)
 
         // 이중 부정
         assert_eq!(negation_normal_form("A!!"), "A"); // !!A -> A
