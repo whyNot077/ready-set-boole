@@ -82,9 +82,7 @@ fn flatten_and(ast: &ASTNode, nodes: &mut Vec<ASTNode>) {
 pub fn conjunctive_normal_form(formula: &str) -> String {
     let ast = get_ast(formula).expect("Failed to parse formula");  // AST를 생성
     let nnf_ast = nnf(&ast);  // NNF로 변환
-    println!("NNF: {}", ast_to_postfix_string(&nnf_ast));
     let cnf_ast = cnf(&nnf_ast);  // CNF로 변환
-    println!("CNF: {}", ast_to_postfix_string(&cnf_ast));
     ast_to_postfix_string(&cnf_ast)  // 결과를 후위 표기법 문자열로 반환
 }
 

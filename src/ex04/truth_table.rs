@@ -16,7 +16,7 @@ fn generate_truth_table(formula: &str) -> Result<String> {
 
 fn extract_and_sort_vars_from_ast(ast: &ASTNode) -> Vec<char> {
     let mut vars = HashSet::new();
-    extract_vars(ast, &mut vars);
+    extract_variables(ast, &mut vars);
     
     let mut vars: Vec<char> = vars.into_iter().collect();
     vars.sort();
@@ -24,18 +24,17 @@ fn extract_and_sort_vars_from_ast(ast: &ASTNode) -> Vec<char> {
 }
 
 /// 재귀적으로 AST를 순회하며 변수를 추출하는 헬퍼 함수
-fn extract_vars(node: &ASTNode, vars: &mut HashSet<char>) {
-    match node {
-        ASTNode::Operand(c) => {
-            if c.is_alphabetic() {
-                vars.insert(*c);
-            }
+pub fn extract_variables(ast: &ASTNode, variables: &mut HashSet<char>) {
+    match ast {
+        ASTNode::Operand(var) => {
+            variables.insert(*var);
         }
-        ASTNode::Operator(_, left, right_opt) => {
-            extract_vars(left, vars);
-            if let Some(right) = right_opt {
-                extract_vars(right, vars);
-            }
+        ASTNode::Operator(_, left, Some(right)) => {
+            extract_variables(left, variables);
+            extract_variables(right, variables);
+        }
+        ASTNode::Operator(_, operand, None) => {
+            extract_variables(operand, variables);
         }
     }
 }
