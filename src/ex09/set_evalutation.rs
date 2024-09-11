@@ -19,9 +19,13 @@ pub fn eval_set(formula: &str, sets: &Vec<Vec<i32>>) -> Vec<i32> {
     // 전체 집합을 구하기 위해 모든 집합의 합집합을 구함
     let universal_set: HashSet<i32> = sets.iter().flat_map(|set| set.iter().cloned()).collect();
 
+    // print the universal set
+    println!("Universal set: {:?}", universal_set);
+
     // 집합 연산을 수행하는 함수를 호출하여 결과 반환
     eval_cnf_set(&cnf_ast, sets, &universal_set)
 }
+
 fn eval_cnf_set(ast: &ASTNode, sets: &Vec<Vec<i32>>, universal_set: &HashSet<i32>) -> Vec<i32> {
     let result = match ast {
         ASTNode::Operand(var) => {
@@ -172,5 +176,8 @@ mod tests {
         // 'ABC&&' with '[[0], [0], []]' -> '[]'
         let sets = vec![vec![0], vec![0], vec![]];
         assert_eq!(eval_set("ABC&&", &sets), vec![]);
+
+        let sets = vec![vec![0], vec![0], vec![]];
+        assert_eq!(eval_set("ABC&&", &sets), vec![1]);
     }
 }
