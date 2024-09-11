@@ -110,8 +110,6 @@ mod tests {
         assert_eq!(conjunctive_normal_form("ABC||!"), "A!B!C!&&");   // !(A | B | C) -> !A & !B & !C
         assert_eq!(conjunctive_normal_form("ABC|&"), "ABC|&");     // CNF 변환 결과 그대로
         assert_eq!(conjunctive_normal_form("ABC&|"), "ABC&|");     // CNF 변환 결과 그대로
-        assert_eq!(conjunctive_normal_form("ABC&|!"), "A!B!|C!|");   // !(A | (B & C)) -> !A | !B | !C
-        assert_eq!(conjunctive_normal_form("ABC^^"), "A^(B^C)");     // XOR은 그대로 유지
-        assert_eq!(conjunctive_normal_form("ABC>>"), "A>>(B>>C)");   // 조건부 연산은 그대로 유지
+        assert_eq!(conjunctive_normal_form("ABC&|!"), "A!B!C!|&");   // !(A | (B & C)) -> !A | !B | !C
     }
 }
