@@ -15,19 +15,19 @@ fn apply_de_morgan(left: &ASTNode) -> ASTNode {
 
         // Negating a conjunction: !(A & B) -> !A | !B
         ASTNode::Operator('&', left_inner, Some(right_inner)) => {
-            let neg_left = nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None));
-            let neg_right = nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None));
+            let neg_left = nnf(&ASTNode::Operator('!', Box::new(left_inner.clone()), None));
+            let neg_right = nnf(&ASTNode::Operator('!', Box::new(right_inner.clone()), None));
             ASTNode::Operator('|', Box::new(neg_left), Some(Box::new(neg_right)))
         }
 
         // Negating a disjunction: !(A | B) -> !A & !B
         ASTNode::Operator('|', left_inner, Some(right_inner)) => {
-            let neg_left = nnf(&ASTNode::Operator('!', Box::new(nnf(left_inner)), None));
-            let neg_right = nnf(&ASTNode::Operator('!', Box::new(nnf(right_inner)), None));
+            let neg_left = nnf(&ASTNode::Operator('!', Box::new(left_inner.clone()), None));
+            let neg_right = nnf(&ASTNode::Operator('!', Box::new(right_inner.clone()), None));
             ASTNode::Operator('&', Box::new(neg_left), Some(Box::new(neg_right)))
         }
 
-        // Negation of a simple operand or an unsupported case
+        // Negation of a simple operand or unsupported cases
         _ => ASTNode::Operator('!', Box::new(nnf(left)), None),
     }
 }
@@ -47,10 +47,11 @@ pub fn nnf(ast: &ASTNode) -> ASTNode {
             ASTNode::Operator(*op, Box::new(left_nnf), Some(Box::new(right_nnf)))
         }
 
-        // Malformed AST or unsupported cases
+        // Unsupported or malformed AST
         _ => ast.clone(),
     }
 }
+
 
 #[cfg(test)]
 mod tests {
